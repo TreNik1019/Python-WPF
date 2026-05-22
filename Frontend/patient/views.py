@@ -13,11 +13,26 @@ def patienten_view(request: HttpRequest) -> object:
     page = request.GET.get("page", 0)
     size = request.GET.get("size", 5)
 
-    result = get_all(nachname=nachname, email=email, page=page, size=size)
+    backend_error = False
+    try:
+        result = get_all(nachname=nachname, email=email, page=page, size=size)
+    except (RuntimeError, ConnectionError, OSError):
+        backend_error = True
+        result = {
+            "content": [],
+            "page": {
+                "size": 5,
+                "number": 0,
+                "total_elements": 0,
+                "total_pages": 0,
+            },
+        }
+
     context = {
         "content": result["content"],
         "page_meta": result["page"],
         "nachname": nachname,
         "email": email,
+        "backend_error": backend_error,
     }
     return render(request, "patient/liste.html", context)

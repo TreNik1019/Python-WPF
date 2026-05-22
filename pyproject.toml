@@ -362,9 +362,10 @@ case-sensitive = true
 # https://docs.astral.sh/ty/reference/configuration
 [tool.ty.environment]
 # https://docs.astral.sh/ty/reference/configuration/#python
-python = "./.venv"
+# https://docs.astral.sh/ty/reference/configuration/#python
+python = ".venv"
 # https://docs.astral.sh/ty/modules
-root = ["./src", "./tests/integration", "./tests/unit"]
+extra-paths = ["Frontend"]
 
 # VORSICHT: in Dockerfile "--no-default-groups" bei "uv sync"
 [tool.uv]
