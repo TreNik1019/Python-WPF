@@ -10,11 +10,11 @@ def get_all(
     email: str = "",
     page: int = 0,
     size: int = 5,
-) -> dict:
+) -> dict[str, object]:
     """Fetch patient data from the FastAPI backend.
 
     Args:
-        nachname: Optional last-name filter.
+        nachname: Optional last name filter.
         email: Optional email filter.
         page: Zero-based page number.
         size: Page size.
@@ -23,7 +23,7 @@ def get_all(
         The parsed JSON response from the backend.
 
     Raises:
-        RuntimeError: If the backend does not return HTTP 200.
+        RuntimeError: If the backend response is not HTTP 200.
     """
     params = {
         "page": page,
@@ -34,7 +34,7 @@ def get_all(
     if email:
         params["email"] = email
 
-    response = requests.get(BACKEND_URL, params=params, timeout=10)
+    response = requests.get(BACKEND_URL, params=params)
     if response.status_code != 200:
         raise RuntimeError(
             f"FastAPI backend request failed with status code {response.status_code}: "
