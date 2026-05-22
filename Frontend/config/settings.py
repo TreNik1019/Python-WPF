@@ -130,3 +130,7 @@ STATIC_URL = '/static/'
 
 # Additional directories where Django will look for static files
 STATICFILES_DIRS = [BASE_DIR / 'static']
+
+# Development server runs on port 8080 to avoid conflict with FastAPI on 8000
+# Start with: python manage.py runserver 8080
+DJANGO_DEV_PORT = 8080
