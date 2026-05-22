@@ -29,3 +29,14 @@ sonar-project.properties
 extras/compose/db/postgres/db_password.txt
 src/patient/config/resources/tls/private-key.pem
 
+# VS Code local settings
+.vscode/settings.json
+
+# Django Frontend
+Frontend/.env
+Frontend/db.sqlite3
+Frontend/__pycache__/
+Frontend/**/__pycache__/
+Frontend/**/*.pyc
+Frontend/pyrightconfig.json
+
