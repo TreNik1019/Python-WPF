@@ -13,13 +13,19 @@ from pathlib import Path
 
 # Build paths to CSV files relative to this file
 BASE_DIR = Path(__file__).resolve().parent
+_THIS_FILE = Path(__file__).resolve()
 BASE_CSV_DIR = (
-    BASE_DIR
-    .joinpath(
-        "../../../../extras/compose/postgres/init/patient/csv",
-    )
-    .resolve()
-)
+    _THIS_FILE.parent
+    / ".."
+    / ".."
+    / ".."
+    / "extras"
+    / "compose"
+    / "postgres"
+    / "init"
+    / "patient"
+    / "csv"
+).resolve()
 
 _PATIENT_CSV = BASE_CSV_DIR / "patient.csv"
 _ADRESSE_CSV = BASE_CSV_DIR / "adresse.csv"
@@ -147,6 +153,12 @@ def _read_patienten(
 # Build MOCK_PATIENTEN at import time
 _ADRESSEN = _read_adressen(_ADRESSE_CSV)
 MOCK_PATIENTEN = _read_patienten(_PATIENT_CSV, _ADRESSEN)
+
+
+if __name__ == "__main__":
+    print(f"CSV path: {BASE_CSV_DIR}")
+    print(f"CSV exists: {BASE_CSV_DIR.exists()}")
+    print(f"Loaded {len(MOCK_PATIENTEN)} patients")
 
 
 def get_all(
