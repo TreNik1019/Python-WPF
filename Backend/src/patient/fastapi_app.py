@@ -23,8 +23,6 @@ __all__ = [
 
 app: Final = FastAPI()
 
-banner(app.routes)
-
 Instrumentator().instrument(app).expose(app)
 
 
@@ -87,3 +85,6 @@ def not_found_error_handler(_request: Request, _err: NotFoundError) -> Response:
 def forbidden_error_handler(_request: Request, _err: ForbiddenError) -> Response:
     """Errorhandler fuer ForbiddenError."""
     return create_problem_details(status_code=status.HTTP_403_FORBIDDEN)
+
+
+banner(app.routes)
