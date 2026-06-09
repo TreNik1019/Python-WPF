@@ -19,8 +19,6 @@ from collections.abc import Sequence
 from patient.router.health_router import liveness, readiness
 from patient.router.health_router import router as health_router
 from patient.router.patient_router import get, get_by_id, get_nachnamen, patient_router
-from patient.router.shutdown_router import router as shutdown_router
-from patient.router.shutdown_router import shutdown
 
 __all__: Sequence[str] = [
     "get",
@@ -29,7 +27,5 @@ __all__: Sequence[str] = [
     "health_router",
     "liveness",
     "patient_router",
-    "readiness",
-    "shutdown",
-    "shutdown_router",
+    "readiness"
 ]
