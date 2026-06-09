@@ -8,10 +8,8 @@ from patient.service.exceptions import (
     UsernameExistsError,
     VersionOutdatedError,
 )
-from patient.service.mailer import send_mail
 from patient.service.patient_dto import PatientDTO
 from patient.service.patient_service import PatientService
-from patient.service.patient_write_service import PatientWriteService
 
 # https://docs.python.org/3/tutorial/modules.html#importing-from-a-package
 __all__ = [
@@ -21,8 +19,6 @@ __all__ = [
     "NotFoundError",
     "PatientDTO",
     "PatientService",
-    "PatientWriteService",
     "UsernameExistsError",
     "VersionOutdatedError",
-    "send_mail",
 ]
