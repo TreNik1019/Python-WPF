@@ -95,6 +95,14 @@ class PatientMockRepository:
         username: str,
         plz: str,
     ) -> Patient:
+        adresse = Adresse(
+            id=patient_id,
+            plz=plz,
+            ort="Karlsruhe",
+            patient_id=patient_id,
+            patient=None,
+        )
+
         patient = Patient(
             id=patient_id,
             version=0,
@@ -108,16 +116,10 @@ class PatientMockRepository:
             familienstand=Familienstand.LEDIG,
             fachaerzte=[Facharzt.CHIRURGIE],
             username=username,
+            adresse=adresse,
+            rechnungen=[],
         )
 
-        patient.adresse = Adresse(
-            id=patient_id,
-            plz=plz,
-            ort="Karlsruhe",
-            patient_id=patient_id,
-            patient=patient,
-        )
-
-        patient.rechnungen = []
+        adresse.patient = patient
 
         return patient
