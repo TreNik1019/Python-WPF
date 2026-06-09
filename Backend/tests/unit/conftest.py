@@ -16,11 +16,11 @@
 """Fixture für pytest: Repository, Patient(Write)Service, KeycloakAdmin, UserService."""
 
 from keycloak import KeycloakAdmin
+from patient.security import UserService
 from pytest import fixture
 from pytest_mock import MockerFixture
 
 from patient.repository import PatientRepository
-from patient.security import UserService
 from patient.service import PatientService, PatientWriteService
 
 # "Fixtures" sind Funktionen, die vor den Test-Funktionen ausgefuehrt werden, um z.B.

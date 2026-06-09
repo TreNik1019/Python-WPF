@@ -1,9 +1,9 @@
 """MainApp fuer GET-Endpunkte mit MockDB."""
 
-from contextlib import asynccontextmanager
+from collections.abc import Awaitable, Callable
 from pathlib import Path
 from time import time
-from typing import TYPE_CHECKING, Final
+from typing import Final
 
 from fastapi import FastAPI, Request, Response, status
 from fastapi.responses import FileResponse
@@ -15,26 +15,15 @@ from patient.problem_details import create_problem_details
 from patient.router import health_router, patient_router
 from patient.service import ForbiddenError, NotFoundError
 
-if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator, Awaitable, Callable
-
 __all__ = [
     "forbidden_error_handler",
     "not_found_error_handler",
 ]
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
-    """Banner beim Start ausgeben."""
-    banner(app.routes)
-    try:
-        yield
-    finally:
-        logger.info("Der Server wird heruntergefahren")
+app: Final = FastAPI()
 
-
-app: Final = FastAPI(lifespan=lifespan)
+banner(app.routes)
 
 Instrumentator().instrument(app).expose(app)
 
@@ -42,7 +31,7 @@ Instrumentator().instrument(app).expose(app)
 @app.middleware("http")
 async def log_request_header(
     request: Request,
-    call_next: "Callable[[Request], Awaitable[Response]]",
+    call_next: Callable[[Request], Awaitable[Response]],
 ) -> Response:
     """Request loggen."""
     logger.debug("{} '{}'", request.method, request.url)
@@ -52,17 +41,19 @@ async def log_request_header(
 @app.middleware("http")
 async def log_response_time(
     request: Request,
-    call_next: "Callable[[Request], Awaitable[Response]]",
+    call_next: Callable[[Request], Awaitable[Response]],
 ) -> Response:
     """Antwortzeit loggen."""
     start = time()
     response = await call_next(request)
     duration_ms = (time() - start) * 1000
+
     logger.debug(
         "Response time: {:.2f} ms, statuscode: {}",
         duration_ms,
         response.status_code,
     )
+
     return response
 
 

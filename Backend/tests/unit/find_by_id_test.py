@@ -20,10 +20,10 @@ from dataclasses import asdict
 from datetime import date
 from typing import TYPE_CHECKING
 
+from patient.security import Role, User
 from pytest import fixture, mark, raises
 
 from patient.entity import Adresse, Familienstand, Geschlecht, Patient
-from patient.security import Role, User
 from patient.service import ForbiddenError, NotFoundError, PatientDTO, PatientService
 
 if TYPE_CHECKING:
