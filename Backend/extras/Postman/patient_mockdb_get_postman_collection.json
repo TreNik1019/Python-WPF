@@ -1,0 +1,156 @@
+{
+  "info": {
+    "name": "Patient MockDB GET API",
+    "description": "Postman Collection zum Testen der GET-Endpunkte der Patient-API mit MockDB. Base URL: https://127.0.0.1:8000. In Postman ggf. SSL certificate verification ausschalten.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Liveness",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/liveness",
+              "host": ["{{baseUrl}}"],
+              "path": ["health", "liveness"]
+            }
+          }
+        },
+        {
+          "name": "Readiness",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/readiness",
+              "host": ["{{baseUrl}}"],
+              "path": ["health", "readiness"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Patienten",
+      "item": [
+        {
+          "name": "Alle Patienten",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rest",
+              "host": ["{{baseUrl}}"],
+              "path": ["rest"]
+            }
+          }
+        },
+        {
+          "name": "Alle Patienten mit Paging",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rest?page=0&size=2",
+              "host": ["{{baseUrl}}"],
+              "path": ["rest"],
+              "query": [
+                {"key": "page", "value": "0"},
+                {"key": "size", "value": "2"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Patient nach ID 1",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rest/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["rest", "1"]
+            }
+          }
+        },
+        {
+          "name": "Patient nach ID 20",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rest/20",
+              "host": ["{{baseUrl}}"],
+              "path": ["rest", "20"]
+            }
+          }
+        },
+        {
+          "name": "Patient nicht vorhanden",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rest/999999",
+              "host": ["{{baseUrl}}"],
+              "path": ["rest", "999999"]
+            }
+          }
+        },
+        {
+          "name": "Suche nach Nachname",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rest?nachname=a",
+              "host": ["{{baseUrl}}"],
+              "path": ["rest"],
+              "query": [
+                {"key": "nachname", "value": "a"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Suche nach Email",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rest?email=alpha@acme.de",
+              "host": ["{{baseUrl}}"],
+              "path": ["rest"],
+              "query": [
+                {"key": "email", "value": "alpha@acme.de"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Nachnamen Teilstring a",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rest/nachnamen/a",
+              "host": ["{{baseUrl}}"],
+              "path": ["rest", "nachnamen", "a"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://127.0.0.1:8000",
+      "type": "string"
+    }
+  ]
+}
