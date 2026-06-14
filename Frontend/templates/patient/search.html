@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Patientenübersicht{% endblock %}
+
+{% block content %}
+<form method="GET" action="" class="flex-shrink-0 flex items-center gap-3 px-6 bg-[#1c2333] border-b border-[#30363d]" style="height: 68px;">
+    <div class="flex items-center gap-2 flex-1 rounded px-3 bg-[#0d1117] border border-[#388bfd]" style="height: 42px;">
+        <i data-lucide="search" class="text-[#8b949e]" style="width: 15px; height: 15px;"></i>
+        <input 
+            type="text" 
+            name="q" 
+            value="{{ query }}" 
+            placeholder="Nachname des Patienten eingeben..." 
+            class="flex-1 bg-transparent outline-none text-[#e6edf3] text-sm"
+        />
+        {% if query %}
+            <a href="{% url 'patienten_liste' %}" class="flex items-center">
+                <i data-lucide="x" class="text-[#8b949e]" style="width: 13px; height: 13px;"></i>
+            </a>
+        {% endif %}
+    </div>
+
+    <button type="submit" class="flex items-center gap-2 rounded flex-shrink-0 bg-[#388bfd] text-white font-medium h-[42px] px-5 hover:opacity-85 transition-opacity text-sm border-0 cursor-pointer">
+        <i data-lucide="search" style="width: 14px; height: 14px;"></i>
+        Suchen
+    </button>
+</form>
+
+<div class="flex-1 flex overflow-hidden">
+
+    <aside class="flex flex-col flex-shrink-0 overflow-y-auto w-[260px] bg-[#161b22] border-r border-[#30363d] py-7 px-5 gap-5">
+        <div>
+            <div class="text-[#8b949e] text-[10px] tracking-wider uppercase font-mono mb-3">Übersicht</div>
+            <div class="flex flex-col gap-2.5">
+                <div class="flex items-center justify-between rounded px-3 py-2 bg-[#0d1117] border border-[#30363d]">
+                    <span class="text-[#8b949e] text-xs">Treffer gesamt</span>
+                    <span class="text-[#e6edf3] text-sm font-semibold font-mono">{{ total_count }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="h-[1px] bg-[#30363d]"></div>
+
+        <div>
+            <div class="text-[#8b949e] text-[10px] tracking-wider uppercase font-mono mb-3">Filter-Info</div>
+            <p class="text-xs text-[#8b949e] leading-relaxed">
+                Gefiltert nach: <br>
+                <span class="text-[#388bfd] font-mono">{% if query %}"{{ query }}"{% else %}Kein Filter{% endif %}</span>
+            </p>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden py-7 px-7">
+        <div class="flex items-center justify-between flex-shrink-0 mb-5">
+            <h2 class="text-[#e6edf3] text-base font-semibold">
+                {% if searched %}Suchergebnisse{% else %}Ergebnisbereich{% endif %}
+            </h2>
+            {% if searched %}
+                <span class="rounded px-2 py-0.5 bg-[#1c2333] text-[#8b949e] text-xs font-mono border border-[#30363d]">
+                    {{ total_count }} Treffer
+                </span>
+            {% endif %}
+        </div>
+
+        {% if not searched %}
+            <div class="flex-1 flex flex-col items-center justify-center gap-4 rounded bg-[#161b22] border border-dashed border-[#30363d]">
+                <i data-lucide="search" class="text-[#30363d]" style="width: 40px; height: 40px;"></i>
+                <p class="text-[#8b949e] text-sm">Suchanfrage oben eingeben und „Suchen“ klicken.</p>
+            </div>
+
+        {% elif searched and not patients %}
+            <div class="flex-1 flex flex-col items-center justify-center gap-3 rounded bg-[#161b22] border border-[#30363d]">
+                <i data-lucide="alert-circle" class="text-[#8b949e]" style="width: 32px; height: 32px;"></i>
+                <p class="text-[#8b949e] text-sm">Keine Patienten unter diesem Namen gefunden.</p>
+            </div>
+
+        {% else %}
+            <div class="flex-1 overflow-auto rounded border border-[#30363d]">
+                <div class="grid sticky top-0 bg-[#1c2333] border-b border-[#30363d] px-4 py-2.5 z-10" style="grid-template-columns: 100px 1fr 120px 1fr 100px;">
+                    <span class="text-[#8b949e] text-[10px] font-mono tracking-wider uppercase">ID</span>
+                    <span class="text-[#8b949e] text-[10px] font-mono tracking-wider uppercase">Name</span>
+                    <span class="text-[#8b949e] text-[10px] font-mono tracking-wider uppercase">E-Mail</span>
+                    <span class="text-[#8b949e] text-[10px] font-mono tracking-wider uppercase">Geburtsdatum</span>
+                    <span class="text-[#8b949e] text-[10px] font-mono tracking-wider uppercase">Status</span>
+                </div>
+
+                {% for p in patients %}
+                <div class="grid transition-colors hover:bg-[#1c2333] bg-[#161b22] border-b border-[#21262d] last:border-0 px-4 py-3 items-center" style="grid-template-columns: 100px 1fr 120px 1fr 100px;">
+                    <span class="text-[#388bfd] text-xs font-mono">P-{{ p.id|slice:":5" }}</span>
+                    <span class="text-[#e6edf3] text-sm font-medium">{{ p.nachname }}, {{ p.vorname }}</span>
+                    <span class="text-[#8b949e] text-xs">{{ p.email }}</span>
+                    <span class="text-[#8b949e] text-xs font-mono">{{ p.geburtsdatum }}</span>
+                    
+                    <span class="flex items-center gap-1.5">
+                        {% if p.status == "aktiv" %}
+                            <span class="rounded-full bg-[#3fb950]" style="width: 6px; height: 6px;"></span>
+                            <span class="text-xs text-[#3fb950]">Aktiv</span>
+                        {% elif p.status == "kritisch" %}
+                            <span class="rounded-full bg-[#f85149]" style="width: 6px; height: 6px;"></span>
+                            <span class="text-xs text-[#f85149]">Kritisch</span>
+                        {% else %}
+                            <span class="rounded-full bg-[#8b949e]" style="width: 6px; height: 6px;"></span>
+                            <span class="text-xs text-[#8b949e]">Inaktiv</span>
+                        {% endif %}
+                    </span>
+                </div>
+                {% endfor %}
+
+                <div class="flex items-center justify-between px-4 py-2 sticky bottom-0 bg-[#1c2333] border-t border-[#30363d]">
+                    <span class="text-[#8b949e] text-xs font-mono">{{ total_count }} Ergebnisse</span>
+                    <span class="text-[#8b949e] text-xs">MedPortal Live-System</span>
+                </div>
+            </div>
+        {% endif %}
+    </main>
+</div>
+{% endblock %}
