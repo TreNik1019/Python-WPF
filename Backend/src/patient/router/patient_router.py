@@ -1,17 +1,14 @@
-"""PatientGetRouter."""
+"""PatientGetRouter mit HTML-Rueckgabe."""
 
-from dataclasses import asdict
-from typing import Annotated, Any, Final
+from typing import Annotated, Final
 
 from fastapi import APIRouter, Depends, Request, Response, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse
 from loguru import logger
 
 from patient.repository import Pageable
-from patient.repository.slice import Slice
 from patient.router.constants import ETAG, IF_NONE_MATCH, IF_NONE_MATCH_MIN_LEN
 from patient.router.dependencies import get_service
-from patient.router.page import Page
 from patient.service import PatientDTO, PatientService
 
 __all__ = ["patient_router"]
@@ -20,7 +17,7 @@ __all__ = ["patient_router"]
 patient_router: Final = APIRouter(tags=["Lesen"])
 
 
-@patient_router.get("/{patient_id}")
+@patient_router.get("/{patient_id}", response_class=HTMLResponse)
 def get_by_id(
     patient_id: int,
     request: Request,
@@ -30,7 +27,6 @@ def get_by_id(
     logger.debug("patient_id={}", patient_id)
 
     patient: Final = service.find_by_id(patient_id=patient_id)
-    logger.debug("{}", patient)
 
     if_none_match: Final = request.headers.get(IF_NONE_MATCH)
     if (
@@ -40,7 +36,6 @@ def get_by_id(
         and if_none_match.endswith('"')
     ):
         version = if_none_match[1:-1]
-        logger.debug("version={}", version)
 
         try:
             if int(version) == patient.version:
@@ -48,17 +43,17 @@ def get_by_id(
         except ValueError:
             logger.debug("invalid version={}", version)
 
-    return JSONResponse(
-        content=_patient_to_dict(patient),
+    return HTMLResponse(
+        content=_patient_to_html(patient),
         headers={ETAG: f'"{patient.version}"'},
     )
 
 
-@patient_router.get("")
+@patient_router.get("", response_class=HTMLResponse)
 def get(
     request: Request,
     service: Annotated[PatientService, Depends(get_service)],
-) -> JSONResponse:
+) -> HTMLResponse:
     """Suche mit Query-Parameter."""
     query_params: Final = request.query_params
     logger.debug("{}", query_params)
@@ -76,44 +71,71 @@ def get(
         pageable=pageable,
     )
 
-    result: Final = _patient_slice_to_page(patient_slice, pageable)
-    logger.debug("{}", result)
-
-    return JSONResponse(content=result)
+    return HTMLResponse(content=_patienten_to_html(patient_slice.content))
 
 
-@patient_router.get("/nachnamen/{teil}")
+@patient_router.get("/nachnamen/{teil}", response_class=HTMLResponse)
 def get_nachnamen(
     teil: str,
     service: Annotated[PatientService, Depends(get_service)],
-) -> JSONResponse:
+) -> HTMLResponse:
     """Suche Nachnamen zum gegebenen Teilstring."""
     logger.debug("teil={}", teil)
 
     nachnamen: Final = service.find_nachnamen(teil=teil)
-    return JSONResponse(content=nachnamen)
+    html = "<ul>" + "".join(f"<li>{nachname}</li>" for nachname in nachnamen) + "</ul>"
+
+    return HTMLResponse(content=html)
 
 
-def _patient_slice_to_page(
-    patient_slice: Slice[PatientDTO],
-    pageable: Pageable,
-) -> dict[str, Any]:
-    patient_dict: Final = tuple(
-        _patient_to_dict(patient) for patient in patient_slice.content
-    )
+def _patienten_to_html(patienten: tuple[PatientDTO, ...]) -> str:
+    rows = "".join(_patient_to_table_row(patient) for patient in patienten)
 
-    page: Final = Page.create(
-        content=patient_dict,
-        pageable=pageable,
-        total_elements=patient_slice.total_elements,
-    )
+    return f"""
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nachname</th>
+            <th>E-Mail</th>
+            <th>Geburtsdatum</th>
+            <th>Geschlecht</th>
+            <th>Familienstand</th>
+            <th>PLZ</th>
+            <th>Ort</th>
+        </tr>
+    </thead>
+    <tbody>
+        {rows}
+    </tbody>
+</table>
+"""
 
-    return asdict(obj=page)
+
+def _patient_to_table_row(patient: PatientDTO) -> str:
+    return f"""
+<tr>
+    <td>{patient.id}</td>
+    <td>{patient.nachname}</td>
+    <td>{patient.email}</td>
+    <td>{patient.geburtsdatum.isoformat()}</td>
+    <td>{patient.geschlecht}</td>
+    <td>{patient.familienstand}</td>
+    <td>{patient.adresse.plz}</td>
+    <td>{patient.adresse.ort}</td>
+</tr>
+"""
 
 
-def _patient_to_dict(patient: PatientDTO) -> dict[str, Any]:
-    patient_dict: Final = asdict(obj=patient)
-    patient_dict.pop("version")
-    patient_dict.update({"geburtsdatum": patient.geburtsdatum.isoformat()})
-
-    return patient_dict
+def _patient_to_html(patient: PatientDTO) -> str:
+    return f"""
+<article>
+    <h2>Patient {patient.id}</h2>
+    <p><strong>Nachname:</strong> {patient.nachname}</p>
+    <p><strong>E-Mail:</strong> {patient.email}</p>
+    <p><strong>Geburtsdatum:</strong> {patient.geburtsdatum.isoformat()}</p>
+    <p><strong>Geschlecht:</strong> {patient.geschlecht}</p>
+    <p><strong>Familienstand:</strong> {patient.familienstand}</p>
+    <p><strong>Adresse:</strong> {patient.adresse.plz} {patient.adresse.ort}</p>
+</article>
+"""

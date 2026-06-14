@@ -11,11 +11,11 @@ router: Final = APIRouter(tags=["Health"])
 
 @router.get("/liveness")
 def liveness() -> dict[str, Any]:
-    """Liveness-Prüfung."""
+    """Liveness-Pruefung."""
     return {"status": "up"}
 
 
 @router.get("/readiness")
 def readiness() -> dict[str, Any]:
-    """Readiness-Prüfung."""
-    return {"status": "up"}
+    """Readiness-Pruefung."""
+    return {"db": "up"}

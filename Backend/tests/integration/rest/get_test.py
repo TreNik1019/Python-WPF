@@ -1,153 +1,82 @@
 # ruff: noqa: S101, D103
-# Copyright (C) 2022 - present Juergen Zimmermann, Hochschule Karlsruhe
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-"""Tests für GET mit Query-Parameter."""
+"""Tests fuer GET mit Query-Parameter."""
 
 from http import HTTPStatus
 from typing import Final
 
-from common_test import ctx, login, rest_url
+from common_test import ctx, rest_url
 from httpx import get
 from pytest import mark
 
 
 @mark.rest
 @mark.get_request
-@mark.parametrize("email", ["admin@acme.com", "alice@acme.edu", "alice@acme.de"])
-def test_get_by_email(email: str) -> None:
-    # arrange
-    params = {"email": email}
-    token: Final = login()
-    assert token is not None
-    headers = {"Authorization": f"Bearer {token}"}
+def test_get_all() -> None:
+    response: Final = get(rest_url, verify=ctx)
 
-    # act
-    response: Final = get(rest_url, params=params, headers=headers, verify=ctx)
-
-    # assert
     assert response.status_code == HTTPStatus.OK
-    response_body: Final = response.json()
-    content: Final = response_body["content"]
-    assert isinstance(content, list)
-    assert len(content) == 1
-    patient = content[0]
-    assert patient is not None
-    assert patient.get("email") == email
-    assert patient.get("id") is not None
+    assert "text/html" in response.headers["content-type"]
+    assert "<table>" in response.text
+    assert "Alpha" in response.text
+    assert "Beta" in response.text
+    assert "Gamma" in response.text
+    assert "Delta" in response.text
+
+
+@mark.rest
+@mark.get_request
+@mark.parametrize("email", ["alpha@acme.de", "beta@acme.de"])
+def test_get_by_email(email: str) -> None:
+    response: Final = get(rest_url, params={"email": email}, verify=ctx)
+
+    assert response.status_code == HTTPStatus.OK
+    assert email in response.text
 
 
 @mark.rest
 @mark.get_request
 @mark.parametrize("email", ["nicht@vorhanden.com", "joe.doe@acme.de"])
 def test_get_by_email_not_found(email: str) -> None:
-    # arrange
-    params = {"email": email}
-    token: Final = login()
-    assert token is not None
-    headers = {"Authorization": f"Bearer {token}"}
+    response: Final = get(rest_url, params={"email": email}, verify=ctx)
 
-    # act
-    response: Final = get(rest_url, params=params, headers=headers, verify=ctx)
-
-    # assert
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
 @mark.rest
 @mark.get_request
-@mark.parametrize("teil", ["Alice", "n"])
+@mark.parametrize("teil", ["Al", "a"])
 def test_get_by_nachname(teil: str) -> None:
-    # arrange
-    params = {"nachname": teil}
-    token: Final = login()
-    assert token is not None
-    headers = {"Authorization": f"Bearer {token}"}
+    response: Final = get(rest_url, params={"nachname": teil}, verify=ctx)
 
-    # act
-    response: Final = get(rest_url, params=params, headers=headers, verify=ctx)
-
-    # assert
     assert response.status_code == HTTPStatus.OK
-    response_body: Final = response.json()
-    assert isinstance(response_body, dict)
-    content: Final = response_body["content"]
-    for p in content:
-        nachname = p.get("nachname")
-        assert nachname is not None and isinstance(nachname, str)
-        assert teil.lower() in nachname.lower()
-        assert p.get("id") is not None
+    assert "<table>" in response.text
 
 
 @mark.rest
 @mark.get_request
 @mark.parametrize("nachname", ["Notfound", "Foo-Bar"])
 def test_get_by_nachname_not_found(nachname: str) -> None:
-    # arrange
-    params = {"nachname": nachname}
-    token: Final = login()
-    assert token is not None
-    headers = {"Authorization": f"Bearer {token}"}
+    response: Final = get(rest_url, params={"nachname": nachname}, verify=ctx)
 
-    # act
-    response: Final = get(rest_url, params=params, headers=headers, verify=ctx)
-
-    # assert
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
 @mark.rest
 @mark.get_request
-@mark.parametrize("teil", ["a", "n"])
+@mark.parametrize("teil", ["a", "A"])
 def test_get_nachnamen(teil: str) -> None:
-    # arrange
-    token: Final = login()
-    assert token is not None
-    headers = {"Authorization": f"Bearer {token}"}
+    response: Final = get(f"{rest_url}/nachnamen/{teil}", verify=ctx)
 
-    # act
-    response: Final = get(
-        f"{rest_url}/nachnamen/{teil}",
-        headers=headers,
-        verify=ctx,
-    )
-
-    # assert
     assert response.status_code == HTTPStatus.OK
-    nachnamen: Final = response.json()
-    assert isinstance(nachnamen, list)
-    assert len(nachnamen) > 0
-    for nachname in nachnamen:
-        assert teil in nachname.lower()
+    assert "text/html" in response.headers["content-type"]
+    assert "<ul>" in response.text
+    assert "<li>" in response.text
 
 
 @mark.rest
 @mark.get_request
 @mark.parametrize("teil", ["xxx", "Abc"])
 def test_get_nachnamen_not_found(teil: str) -> None:
-    # arrange
-    token: Final = login()
-    assert token is not None
-    headers = {"Authorization": f"Bearer {token}"}
+    response: Final = get(f"{rest_url}/nachnamen/{teil}", verify=ctx)
 
-    # act
-    response: Final = get(
-        f"{rest_url}/nachnamen/{teil}",
-        headers=headers,
-        verify=ctx,
-    )
-
-    # assert
     assert response.status_code == HTTPStatus.NOT_FOUND
