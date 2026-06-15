@@ -137,4 +137,5 @@ DJANGO_DEV_PORT = 8080
 
 # Backend API URL used by the Django frontend services (can be overridden in
 # environment-specific settings).
-BACKEND_URL = "http://127.0.0.1:8000/rest"
+BACKEND_URL = "https://127.0.0.1:8000/rest"
+BACKEND_VERIFY = False

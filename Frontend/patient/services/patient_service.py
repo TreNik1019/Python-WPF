@@ -4,7 +4,8 @@ import requests
 from django.conf import settings
 
 # Read backend URL from Django settings to make it configurable.
-BACKEND_URL = getattr(settings, "BACKEND_URL", "http://127.0.0.1:8000/rest")
+BACKEND_URL = getattr(settings, "BACKEND_URL", "https://127.0.0.1:8000/rest")
+BACKEND_VERIFY = getattr(settings, "BACKEND_VERIFY", False)
 HTTP_OK = 200
 
 
@@ -13,7 +14,7 @@ def get_all(
     email: str = "",
     page: int = 0,
     size: int = 5,
-) -> dict[str, object]:
+) -> str:
     """Fetch patient data from the FastAPI backend.
 
     Args:
@@ -35,11 +36,19 @@ def get_all(
     if email:
         params["email"] = email
 
-    response = requests.get(BACKEND_URL, params=params, timeout=10)
+    print(f"🔎 FRONTEND SERVICE: Sending GET to {BACKEND_URL} with params: {params}")
+    response = requests.get(
+        BACKEND_URL,
+        params=params,
+        timeout=10,
+        verify=BACKEND_VERIFY,
+    )
+    print(f"🔎 FRONTEND SERVICE: Response status: {response.status_code}")
     if response.status_code != HTTP_OK:
+        print(f"🔎 FRONTEND SERVICE: ERROR response text: {response.text[:500]}")
         raise RuntimeError(
             f"FastAPI backend request failed with status code {response.status_code}: "
             f"{response.text}"
         )
 
-    return response.json()
+    return response.text

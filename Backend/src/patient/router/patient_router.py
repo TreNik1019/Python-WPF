@@ -3,13 +3,14 @@
 from typing import Annotated, Final
 
 from fastapi import APIRouter, Depends, Request, Response, status
-from fastapi.responses import HTMLResponse
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import HTMLResponse, JSONResponse
 from loguru import logger
 
 from patient.repository import Pageable
 from patient.router.constants import ETAG, IF_NONE_MATCH, IF_NONE_MATCH_MIN_LEN
 from patient.router.dependencies import get_service
-from patient.service import PatientDTO, PatientService
+from patient.service import NotFoundError, PatientDTO, PatientService
 
 __all__ = ["patient_router"]
 
@@ -43,6 +44,12 @@ def get_by_id(
         except ValueError:
             logger.debug("invalid version={}", version)
 
+    if _accepts_json(request):
+        return JSONResponse(
+            content=jsonable_encoder(patient),
+            headers={ETAG: f'"{patient.version}"'},
+        )
+
     return HTMLResponse(
         content=_patient_to_html(patient),
         headers={ETAG: f'"{patient.version}"'},
@@ -53,9 +60,10 @@ def get_by_id(
 def get(
     request: Request,
     service: Annotated[PatientService, Depends(get_service)],
-) -> HTMLResponse:
+) -> Response:
     """Suche mit Query-Parameter."""
     query_params: Final = request.query_params
+    print(f"🔍 BACKEND: Incoming query_params: {dict(query_params)}")
     logger.debug("{}", query_params)
 
     page: Final = query_params.get("page")
@@ -65,13 +73,51 @@ def get(
     suchparameter = dict(query_params)
     suchparameter.pop("page", None)
     suchparameter.pop("size", None)
+    print(f"🔍 BACKEND: suchparameter dict: {suchparameter}")
 
-    patient_slice: Final = service.find(
-        suchparameter=suchparameter,
-        pageable=pageable,
-    )
+    try:
+        print(f"🔍 BACKEND: Calling service.find()...")
+        patient_slice: Final = service.find(
+            suchparameter=suchparameter,
+            pageable=pageable,
+        )
+        print(f"🔍 BACKEND: Found {len(patient_slice.content)} patients")
+    except NotFoundError as e:
+        print(f"🔍 BACKEND: NotFoundError caught - {e}")
+        patient_slice = None
 
-    return HTMLResponse(content=_patienten_to_html(patient_slice.content))
+    if _accepts_json(request):
+        if patient_slice is None:
+            return JSONResponse(
+                content={
+                    "content": [],
+                    "page": {
+                        "total_elements": 0,
+                        "size": pageable.size,
+                        "number": pageable.number,
+                    },
+                }
+            )
+        return JSONResponse(
+            content={
+                "content": jsonable_encoder(patient_slice.content),
+                "page": {
+                    "total_elements": patient_slice.total_elements,
+                    "size": pageable.size,
+                    "number": pageable.number,
+                },
+            }
+        )
+
+    if patient_slice is None:
+        print(f"🔍 BACKEND: Returning empty HTML table")
+        html = _patienten_to_html(())
+        print(f"🔍 BACKEND: HTML length: {len(html)}")
+        return HTMLResponse(content=html)
+
+    html = _patienten_to_html(patient_slice.content)
+    print(f"🔍 BACKEND: Returning HTML with {len(patient_slice.content)} rows, total HTML length: {len(html)}")
+    return HTMLResponse(content=html)
 
 
 @patient_router.get("/nachnamen/{teil}", response_class=HTMLResponse)
@@ -86,6 +132,11 @@ def get_nachnamen(
     html = "<ul>" + "".join(f"<li>{nachname}</li>" for nachname in nachnamen) + "</ul>"
 
     return HTMLResponse(content=html)
+
+
+def _accepts_json(request: Request) -> bool:
+    accept_header: Final = request.headers.get("accept", "")
+    return "application/json" in accept_header.lower()
 
 
 def _patienten_to_html(patienten: tuple[PatientDTO, ...]) -> str:
