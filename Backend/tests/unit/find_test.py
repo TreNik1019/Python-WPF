@@ -6,13 +6,13 @@ from pytest import mark, raises
 from patient.repository import Pageable
 from patient.service import NotFoundError, PatientService
 
-ANZAHL_PATIENTEN = 4
+ANZAHL_PATIENTEN = 20
 
 
 @mark.unit
 @mark.unit_find
 def test_find_all(patient_service: PatientService) -> None:
-    pageable = Pageable(size=10, number=0)
+    pageable = Pageable(size=20, number=0)
 
     patienten_slice = patient_service.find(suchparameter={}, pageable=pageable)
 

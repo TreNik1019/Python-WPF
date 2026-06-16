@@ -21,6 +21,42 @@ class PatientMockRepository:
             self._create_patient(20, "Beta", "beta@acme.de", "patient", "76133"),
             self._create_patient(30, "Gamma", "gamma@acme.de", "patient30", "76135"),
             self._create_patient(50, "Delta", "delta@acme.de", "patient50", "76137"),
+            self._create_patient(
+                60, "Epsilon", "epsilon@acme.de", "patient60", "76139"
+            ),
+            self._create_patient(70, "Zeta", "zeta@acme.de", "patient70", "76141"),
+            self._create_patient(80, "Eta", "eta@acme.de", "patient80", "76143"),
+            self._create_patient(90, "Theta", "theta@acme.de", "patient90", "76145"),
+            self._create_patient(100, "Iota", "iota@acme.de", "patient100", "76147"),
+            self._create_patient(
+                110, "Kappa", "kappa@acme.de", "patient110", "76149"
+            ),
+            self._create_patient(
+                120, "Lambda", "lambda@acme.de", "patient120", "76151"
+            ),
+            self._create_patient(
+                130, "Mueller", "mueller@acme.de", "patient130", "76153"
+            ),
+            self._create_patient(
+                140, "Neumann", "neumann@acme.de", "patient140", "76155"
+            ),
+            self._create_patient(
+                150, "Schmidt", "schmidt@acme.de", "patient150", "76157"
+            ),
+            self._create_patient(160, "Weber", "weber@acme.de", "patient160", "76159"),
+            self._create_patient(
+                170, "Wagner", "wagner@acme.de", "patient170", "76161"
+            ),
+            self._create_patient(
+                180, "Fischer", "fischer@acme.de", "patient180", "76163"
+            ),
+            self._create_patient(
+                190, "Becker", "becker@acme.de", "patient190", "76165"
+            ),
+            self._create_patient(
+                200, "Hoffmann", "hoffmann@acme.de", "patient200", "76167"
+            ),
+            self._create_patient(210, "Koch", "koch@acme.de", "patient210", "76169"),
         )
 
     def find_by_id(
