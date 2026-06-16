@@ -20,18 +20,24 @@ def search_view(request):
                 size=20
             )
             print("🔎 FRONTEND: HTML received")
+
+            total_rows = html_table.count("<tr")
+            total_count = max(0, total_rows - 1) if total_rows > 0 else 0
             
         except Exception as e:
             print(f"🔎 FRONTEND ERROR: {type(e).__name__}: {e}")
             html_table = ""
+            total_count = 0
             
         return render(request, "patient/search.html", {
             "query": query,
             "html_table": html_table,
+            "total_count": total_count,
         })
 
     print("🔎 FRONTEND: Initialer Seitenaufruf")
     return render(request, "patient/search.html", {
         "query": "",
         "html_table": None,
+        "total_count": 0,
     })
