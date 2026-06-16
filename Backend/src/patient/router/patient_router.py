@@ -63,7 +63,6 @@ def get(
 ) -> Response:
     """Suche mit Query-Parameter."""
     query_params: Final = request.query_params
-    print(f"🔍 BACKEND: Incoming query_params: {dict(query_params)}")
     logger.debug("{}", query_params)
 
     page: Final = query_params.get("page")
@@ -73,31 +72,16 @@ def get(
     suchparameter = dict(query_params)
     suchparameter.pop("page", None)
     suchparameter.pop("size", None)
-    print(f"🔍 BACKEND: suchparameter dict: {suchparameter}")
 
     try:
-        print(f"🔍 BACKEND: Calling service.find()...")
         patient_slice: Final = service.find(
             suchparameter=suchparameter,
             pageable=pageable,
         )
-        print(f"🔍 BACKEND: Found {len(patient_slice.content)} patients")
-    except NotFoundError as e:
-        print(f"🔍 BACKEND: NotFoundError caught - {e}")
-        patient_slice = None
+    except NotFoundError:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
 
     if _accepts_json(request):
-        if patient_slice is None:
-            return JSONResponse(
-                content={
-                    "content": [],
-                    "page": {
-                        "total_elements": 0,
-                        "size": pageable.size,
-                        "number": pageable.number,
-                    },
-                }
-            )
         return JSONResponse(
             content={
                 "content": jsonable_encoder(patient_slice.content),
@@ -109,14 +93,7 @@ def get(
             }
         )
 
-    if patient_slice is None:
-        print(f"🔍 BACKEND: Returning empty HTML table")
-        html = _patienten_to_html(())
-        print(f"🔍 BACKEND: HTML length: {len(html)}")
-        return HTMLResponse(content=html)
-
     html = _patienten_to_html(patient_slice.content)
-    print(f"🔍 BACKEND: Returning HTML with {len(patient_slice.content)} rows, total HTML length: {len(html)}")
     return HTMLResponse(content=html)
 
 
@@ -128,7 +105,14 @@ def get_nachnamen(
     """Suche Nachnamen zum gegebenen Teilstring."""
     logger.debug("teil={}", teil)
 
-    nachnamen: Final = service.find_nachnamen(teil=teil)
+    try:
+        nachnamen: Final = service.find_nachnamen(teil=teil)
+    except NotFoundError:
+        return HTMLResponse(
+            content="",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+
     html = "<ul>" + "".join(f"<li>{nachname}</li>" for nachname in nachnamen) + "</ul>"
 
     return HTMLResponse(content=html)

@@ -1,4 +1,3 @@
-# ruff: noqa: S101, D103
 """Allgemeine Daten fuer die Tests."""
 
 from http import HTTPStatus
