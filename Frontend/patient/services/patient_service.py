@@ -7,10 +7,9 @@ BACKEND_URL = getattr(settings, "BACKEND_URL", "https://127.0.0.1:8000/rest")
 BACKEND_VERIFY = getattr(settings, "BACKEND_VERIFY", False)
 HTTP_OK = 200
 
-def get_all_html(nachname: str = "", page: int = 0, size: int = 10) -> str:
+def get_all_html(page: int = 0, size: int = 10) -> str:
     """Holt die Patiententabelle als fertigen HTML-String vom Backend."""
     params = {"page": page, "size": size}
-    if nachname: params["nachname"] = nachname
 
     # Standardaufruf
     response = requests.get(BACKEND_URL, params=params, timeout=10, verify=BACKEND_VERIFY)
@@ -20,10 +19,9 @@ def get_all_html(nachname: str = "", page: int = 0, size: int = 10) -> str:
 
     return response.text
 
-def get_count(nachname: str = "") -> int:
+def get_count() -> int:
     """Nutzt den Accept-Header, um die Anzahl der Patienten aus dem Backend-JSON zu lesen."""
     params = {"page": 0, "size": 1}
-    if nachname: params["nachname"] = nachname
 
     headers = {"Accept": "application/json"}
     
