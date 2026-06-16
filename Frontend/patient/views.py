@@ -73,12 +73,14 @@ def search_view(request):
     # VALIDIERUNG: Sonderzeichen abfangen
     if not re.match(r'^[a-zA-ZäöüÄÖÜß0-9\s\-]+$', query):
         return render(request, "patient/search.html", {
-            "query": query, "id_val": id_val, "nachname_val": nachname_val,
+            "query": query,
+            "id_val": id_val,
+            "nachname_val": nachname_val,
             "html_table": "",
             "total_count": 0,
             "has_next": False,
             "filter_type": "Ungültig",
-            "error_type": "invalid_chars",
+            "error_type": "validation_error",
             "error_message": "Ungültige Zeichen verwendet. Bitte nur Buchstaben oder Zahlen eingeben."
         })
 
@@ -93,7 +95,8 @@ def search_view(request):
                 "html_table": "",
                 "total_count": 0,
                 "has_next": False,
-                "filter_type": filter_type,
+                "filter_type": "Ungültig",
+                "error_type": "validation_error",
                 "error_message": "Die ID muss zwischen 1 und 4 Ziffern lang sein."
             })
         
@@ -144,8 +147,24 @@ def search_view(request):
     else:
         filter_type = "Nachname"
         try:
-            total_elements = patient_service.get_count()
-            html_table = patient_service.get_all_html(page=0, size=100)
+            page = max(0, int(request.GET.get('page', 0)))
+        except (ValueError, TypeError):
+            page = 0
+
+        try:
+            size = 10
+
+            total_elements = patient_service.get_count(nachname=query) 
+
+            total_pages = (total_elements + size - 1) // size if total_elements > 0 else 1
+            if page >= total_pages: 
+                page = max(0, total_pages - 1)
+
+            html_table = patient_service.get_all_html(nachname=query, page=page, size=size)
+            
+            has_next = (page + 1) < total_pages
+            current_page = page
+            
         except Exception as e:
             print(f"SUCHE API ERROR: {e}")
 

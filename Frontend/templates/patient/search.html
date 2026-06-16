@@ -12,7 +12,7 @@
             type="text" 
             name="query" 
             value="{{ query }}" 
-            placeholder="Nachname des Patienten eingeben..." 
+            placeholder="Nach Patienten suchen..." 
             class="flex-1 bg-transparent outline-none text-[#e6edf3] text-sm"
         />
 
@@ -43,8 +43,12 @@
             <div class="flex items-center md:items-start gap-2 md:gap-1 text-xs text-[#8b949e] flex-1 md:flex-none justify-end md:justify-start">
                 <span class="md:block hidden text-[10px] tracking-wider uppercase font-mono mb-1 text-[#8b949e]">Filter-Info:</span>
                 <span class="md:hidden">Filter:</span>
-                <span class="text-[#388bfd] font-mono truncate max-w-[120px] md:max-w-none">
-                    {% if query %}"{{ query }}"{% else %}Kein Filter{% endif %}
+                <span class="text-[#388bfd] font-mono truncate max-w-[160px] md:max-w-none">
+                    {% if query %}
+                        {{ filter_type }}: "{{ query }}"
+                    {% else %}
+                        Kein Filter
+                    {% endif %}
                 </span>
             </div>
         </div>
@@ -59,9 +63,7 @@
 
         {% if html_table %}
             <div class="flex-1 overflow-x-auto rounded border border-[#30363d] bg-[#161b22] w-full">
-                
                 <div class="inline-block min-w-full align-middle p-0">
-                    
                     <div class="w-full
                                 [&_table]:min-w-[750px] [&_table]:w-full [&_table]:border-collapse
                                 [&_th]:px-4 [&_th]:py-3 [&_th]:text-left [&_th]:text-xs [&_th]:font-semibold [&_th]:text-[#8b949e] [&_th]:border-b [&_th]:border-[#30363d] [&_th]:uppercase [&_th]:tracking-wider
@@ -72,10 +74,50 @@
                 </div>
             </div>
 
+            {% if filter_type != "ID" and html_table %}
+            <div class="flex items-center justify-between mt-4 px-1 flex-shrink-0">
+                <span class="text-xs text-[#8b949e]">
+                    Seite <span class="font-mono text-[#e6edf3] font-semibold">{{ current_page|add:1 }}</span>
+                </span>
+
+                <div class="flex gap-2">
+                    {% if current_page > 0 %}
+                        <a href="?query={{ query }}&page={{ prev_page }}" 
+                            class="flex items-center justify-center rounded bg-[#21262d] text-[#e6edf3] text-xs font-medium h-8 px-3 border border-[#30363d] hover:bg-[#30363d] transition-colors no-underline">
+                            &larr; Vorherige
+                        </a>
+                    {% else %}
+                        <button disabled class="flex items-center justify-center rounded bg-[#161b22] text-[#8b949e] text-xs font-medium h-8 px-3 border border-[#30363d]/40 cursor-not-allowed opacity-50">
+                            &larr; Vorherige
+                        </button>
+                    {% endif %}
+
+                    {% if has_next %}
+                        <a href="?query={{ query }}&page={{ next_page }}" 
+                            class="flex items-center justify-center rounded bg-[#21262d] text-[#e6edf3] text-xs font-medium h-8 px-3 border border-[#30363d] hover:bg-[#30363d] transition-colors no-underline">
+                            Nächste &rarr;
+                        </a>
+                    {% else %}
+                        <button disabled class="flex items-center justify-center rounded bg-[#161b22] text-[#8b949e] text-xs font-medium h-8 px-3 border border-[#30363d]/40 cursor-not-allowed opacity-50">
+                            Nächste &rarr;
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
         {% elif query %}
             <div class="flex-1 flex flex-col items-center justify-center gap-3 rounded bg-[#161b22] border border-[#30363d] py-10">
-                <i data-lucide="alert-circle" class="text-[#8b949e]" style="width:32px; height:32px;"></i>
-                <p class="text-[#8b949e] text-sm">Keine Patienten gefunden.</p>
+                
+                {% if error_type == "validation_error" %}
+                    <i data-lucide="shield-alert" class="text-[#f85149]" style="width:36px; height:36px;"></i>
+                {% else %}
+                    <i data-lucide="alert-circle" class="text-[#8b949e]" style="width:32px; height:32px;"></i>
+                {% endif %}
+
+                <p class="text-[#8b949e] text-sm text-center px-4">
+                    {% if error_message %}{{ error_message }}{% else %}Keine Patienten gefunden.{% endif %}
+                </p>
             </div>
 
         {% else %}
