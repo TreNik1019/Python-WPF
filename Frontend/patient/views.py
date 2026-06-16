@@ -7,28 +7,31 @@ def home_view(request):
 
 
 def search_view(request):
-    query = request.GET.get('q', '').strip()
-    print(f"🔎 FRONTEND: Incoming query: '{query}'")
+    if 'query' in request.GET:
+        query = request.GET.get('query', '').strip()
+        print(f"🔎 FRONTEND: Suche nach: '{query}'")
+        
+        try:
+            print("🔎 FRONTEND: Calling backend")
 
-    html_table = ""
+            html_table = patient_service.get_all(
+                nachname=query,
+                page=0,
+                size=20
+            )
+            print("🔎 FRONTEND: HTML received")
+            
+        except Exception as e:
+            print(f"🔎 FRONTEND ERROR: {type(e).__name__}: {e}")
+            html_table = ""
+            
+        return render(request, "patient/search.html", {
+            "query": query,
+            "html_table": html_table,
+        })
 
-    try:
-        print("🔎 FRONTEND: Calling backend")
-
-        # 🔥 wenn query leer ist → einfach alle holen
-        html_table = patient_service.get_all(
-            nachname=query,   # leer string = keine Filterung
-            page=0,
-            size=20
-        )
-
-        print("🔎 FRONTEND: HTML received")
-
-    except Exception as e:
-        print(f"🔎 FRONTEND ERROR: {type(e).__name__}: {e}")
-        html_table = ""
-
+    print("🔎 FRONTEND: Initialer Seitenaufruf")
     return render(request, "patient/search.html", {
-        "query": query,
-        "html_table": html_table,
+        "query": "",
+        "html_table": None,
     })
