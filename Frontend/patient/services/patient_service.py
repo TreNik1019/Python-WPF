@@ -1,5 +1,5 @@
 """HTTP client for retrieving patient data from the FastAPI backend."""
-
+from typing import Any
 import requests
 from django.conf import settings
 
@@ -9,11 +9,9 @@ HTTP_OK = 200
 
 def get_all_html(nachname: str = "", page: int = 0, size: int = 10) -> str:
     """Holt die fertige HTML-Tabelle vom Backend – optional gefiltert und mit Pagination."""
-    params = {"page": page, "size": size}
-    if nachname: 
-        params["nachname"] = nachname
+    params = {"page": page, "size": size, "nachname": nachname} if nachname else {"page": page, "size": size}
 
-    #Standard
+    #Default
     response = requests.get(BACKEND_URL, params=params, timeout=10, verify=BACKEND_VERIFY)
     if response.status_code == HTTP_OK:
         return response.text
@@ -21,9 +19,9 @@ def get_all_html(nachname: str = "", page: int = 0, size: int = 10) -> str:
 
 def get_count(nachname: str = "") -> int:
     """Holt die Anzahl der Treffer – entweder global oder gefiltert nach Nachname."""
-    params = {"page": 0, "size": 1}
-    if nachname: 
-        params["nachname"] = nachname
+    params: dict[str, Any] = {"page": 0, "size": 1}
+    if nachname:
+        params["Nachname"] = nachname
 
     headers = {"Accept": "application/json"}
     
