@@ -1,7 +1,8 @@
 """Django settings for the Frontend project."""
 
-import os
 from pathlib import Path
+
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -13,21 +14,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 # Do not store a production secret key in source control. Read from
 # the environment instead. Prefer `django-environ` and a project `.env` file.
-def _load_secret_key(base_dir: Path) -> str:
-    import environ  # type: ignore[import-untyped]  # noqa: PLC0415
+env = environ.Env()
+env_file = BASE_DIR / ".env"
+if env_file.exists():
+    environ.Env.read_env(env_file)
 
-    env = environ.Env()
-    environ.Env.read_env(base_dir / ".env")
-    return env("DJANGO_SECRET_KEY")
-
-
-try:
-    SECRET_KEY = _load_secret_key(BASE_DIR)
-except ImportError:
-    SECRET_KEY = os.environ.get(
-        "DJANGO_SECRET_KEY",
-        "django-insecure-fallback-key-only-for-development",
-    )
+SECRET_KEY = env(
+    "DJANGO_SECRET_KEY",
+    default="django-insecure-fallback-key-only-for-development",
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -55,7 +50,15 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.csp.ContentSecurityPolicyMiddleware',
 ]
+
+SECURE_CSP = {
+    "default-src": ["'self'"],
+    "style-src": ["'self'", "'unsafe-inline'"],
+    "script-src": ["'self'", "'unsafe-inline'", "https://unpkg.com"],
+    "img-src": ["'self'", "data:"],
+}
 
 ROOT_URLCONF = 'config.urls'
 
@@ -138,4 +141,5 @@ DJANGO_DEV_PORT = 8080
 # Backend API URL used by the Django frontend services (can be overridden in
 # environment-specific settings).
 BACKEND_URL = "https://127.0.0.1:8000/rest"
-BACKEND_VERIFY = False
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

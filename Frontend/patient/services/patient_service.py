@@ -4,7 +4,6 @@ import requests
 from django.conf import settings
 
 BACKEND_URL = getattr(settings, "BACKEND_URL", "https://127.0.0.1:8000/rest")
-BACKEND_VERIFY = getattr(settings, "BACKEND_VERIFY", False)
 HTTP_OK = 200
 
 def get_all_html(nachname: str = "", page: int = 0, size: int = 10) -> str:
@@ -12,7 +11,9 @@ def get_all_html(nachname: str = "", page: int = 0, size: int = 10) -> str:
     params = {"page": page, "size": size, "nachname": nachname} if nachname else {"page": page, "size": size}
 
     #Default
-    response = requests.get(BACKEND_URL, params=params, timeout=10, verify=BACKEND_VERIFY)
+    # verify=False: self-signed cert in local dev -
+    # must be True with valid cert in production
+    response = requests.get(BACKEND_URL, params=params, timeout=10, verify=False)
     if response.status_code == HTTP_OK:
         return response.text
     return ""
@@ -25,7 +26,9 @@ def get_count(nachname: str = "") -> int:
 
     headers = {"Accept": "application/json"}
     
-    response = requests.get(BACKEND_URL, params=params, headers=headers, timeout=10, verify=BACKEND_VERIFY)
+    # verify=False: self-signed cert in local dev -
+    # must be True with valid cert in production
+    response = requests.get(BACKEND_URL, params=params, headers=headers, timeout=10, verify=False)
     if response.status_code == HTTP_OK:
         data = response.json()
         return int(data.get("page", {}).get("total_elements", 0))
@@ -34,7 +37,9 @@ def get_count(nachname: str = "") -> int:
 def get_by_id_html(patient_id: int) -> str:
     """Ruft den spezifischen ID-Endpoint auf und liefert das HTML."""
     url = f"{BACKEND_URL}/{patient_id}"
-    response = requests.get(url, timeout=10, verify=BACKEND_VERIFY)
+    # verify=False: self-signed cert in local dev -
+    # must be True with valid cert in production
+    response = requests.get(url, timeout=10, verify=False)
     
     if response.status_code == HTTP_OK:
         return response.text
