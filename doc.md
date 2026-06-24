@@ -126,10 +126,11 @@ uv run python -m patient
 
 ```powershell
 cd Frontend
-.\start.ps1
+uv sync
+uv run frontend
 ```
 
-Das Script `Frontend/start.ps1` startet den Django-Entwicklungsserver auf Port **8080**. Es nutzt automatisch das lokale `.venv`, falls vorhanden, andernfalls das Python aus dem PATH.
+Das registrierte `uv`-Skript `frontend` baut das Tailwind-CSS und startet den Django-Entwicklungsserver auf Port **8001**. Details siehe `Frontend/README.md`.
 
 ---
 
