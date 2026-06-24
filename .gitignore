@@ -41,3 +41,4 @@ Frontend/**/*.pyc
 Frontend/pyrightconfig.json
 Frontend/tailwindcss.exe
 Frontend/static/css/main.css
+.claude/settings.json
