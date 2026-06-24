@@ -72,9 +72,6 @@ def main():
     except Exception:
         pass
 
-    # Parse argument --dev
-    dev_mode = "--dev" in sys.argv or "-Dev" in sys.argv
-
     # 3. Einmalig CSS kompilieren
     print("Kompiliere CSS mit Tailwind CSS v4...")
     subprocess.run(
@@ -82,22 +79,7 @@ def main():
         check=True,
     )
 
-    # 4. Watcher im Hintergrund (nur bei --dev)
-    watcher_process = None
-    if dev_mode:
-        print("Entwicklungsmodus: Starte Tailwind CSS Watcher im Hintergrund...")
-        watcher_process = subprocess.Popen(
-            [
-                str(tailwindExe),
-                "-i",
-                "static/css/index.css",
-                "-o",
-                "static/css/main.css",
-                "--watch",
-            ]
-        )
-
-    # 5. Django starten
+    # 4. Django starten
     venv_python = BASE_DIR / ".venv" / "Scripts" / "python.exe"
     if not venv_python.exists():
         venv_python = BASE_DIR / ".venv" / "bin" / "python"
@@ -109,8 +91,3 @@ def main():
         subprocess.run([python_executable, "manage.py", "runserver", "8001"])
     except KeyboardInterrupt:
         print("\nDjango Webserver wird beendet...")
-    finally:
-        if watcher_process and watcher_process.poll() is None:
-            print("Stoppe Tailwind CSS Watcher...")
-            watcher_process.terminate()
-            watcher_process.wait()
