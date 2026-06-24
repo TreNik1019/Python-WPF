@@ -7,8 +7,8 @@ from pathlib import Path
 
 
 def main():
-    # Set working directory to the Frontend folder (one level above src/frontend/)
-    BASE_DIR = Path(__file__).resolve().parent.parent.parent
+    # Set working directory to the Frontend folder (this file's location)
+    BASE_DIR = Path(__file__).resolve().parent
     os.chdir(BASE_DIR)
 
     tailwindExe = BASE_DIR / "tailwindcss.exe"
@@ -91,3 +91,7 @@ def main():
         subprocess.run([python_executable, "manage.py", "runserver", "8001"])
     except KeyboardInterrupt:
         print("\nDjango Webserver wird beendet...")
+
+
+if __name__ == "__main__":
+    main()
