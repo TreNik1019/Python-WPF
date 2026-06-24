@@ -99,14 +99,28 @@ pyproject.toml
 uv.lock
 ```
 
+### Erstmalige Einrichtung (Manueller Download):
+
+1. Lade das offizielle Tailwind-Windows-CLI-Executable herunter:
+   **[Download-Link (Tailwind v4.3.1 Windows x64)](https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-windows-x64.exe)**
+2. Benenne die heruntergeladene Datei in `tailwindcss.exe` um.
+3. Kopiere die `tailwindcss.exe` direkt in diesen `Frontend/`-Ordner.
+
 ---
 
-## 6. Frontend starten
+## 6. Frontend starten (inkl. Tailwind CSS v4 Build)
 
-Da das Backend separat läuft und meistens Port `8000` verwendet, wird das Frontend auf Port `8001` gestartet:
+Das Projekt nutzt die offizielle, Node-freie **Tailwind Standalone CLI** für das CSS-Build-System. Du musst dafür kein Node.js, npm oder `package.json` installieren.
 
+### Frontend starten:
+
+Zum Starten des Frontends nutzen wir ein registriertes `uv`-Skript. Dieses prüft, ob die `tailwindcss.exe` da ist, gleicht leise die Version mit dem neuesten Release ab (und warnt bei Abweichungen), baut das CSS und startet den Django-Webserver auf Port `8001`:
+
+**Standard-Start (für den Kunden / Deployment):**
+
+Kompiliert das CSS einmalig frisch und startet den Django-Server (ohne Watch-Prozess im Hintergrund):
 ```powershell
-uv run python manage.py runserver 8001
+uv run frontend
 ```
 
 Danach ist das Frontend im Browser erreichbar unter:
@@ -272,6 +286,10 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 ```
 
 Frontend einrichten:
+1. Lade das offizielle Tailwind-Windows-CLI-Executable herunter:
+   **[Download-Link (Tailwind v4.3.1 Windows x64)](https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-windows-x64.exe)**
+2. Benenne die heruntergeladene Datei in `tailwindcss.exe` um.
+3. Kopiere die `tailwindcss.exe` direkt in diesen `Frontend/`-Ordner.
 
 ```powershell
 cd C:\Zimmermann\Projekte\Python-WPF\Frontend
@@ -281,7 +299,7 @@ uv sync
 Frontend starten:
 
 ```powershell
-uv run python manage.py runserver 8001
+uv run frontend
 ```
 
 Frontend öffnen:
