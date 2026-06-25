@@ -27,5 +27,5 @@ __all__: Sequence[str] = [
     "health_router",
     "liveness",
     "patient_router",
-    "readiness"
+    "readiness",
 ]

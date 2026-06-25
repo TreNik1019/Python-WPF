@@ -133,12 +133,17 @@ STATIC_URL = "/static/"
 # Additional directories where Django will look for static files
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
-# Development server runs on port 8001 to avoid conflict with FastAPI/Backend on 8080/8000
+# Development server runs on port 8001, da FastAPI/Backend 8080/8000 nutzt.
 # Start with: python manage.py runserver 8001
 DJANGO_DEV_PORT = 8001
 
 # Backend API URL used by the Django frontend services (can be overridden in
 # environment-specific settings).
 BACKEND_URL = env("BACKEND_URL", default="https://127.0.0.1:8000/rest")
+
+# TLS-Zertifikatsprüfung für Requests an das Backend. In lokaler Entwicklung
+# nutzt das Backend ein selbstsigniertes Zertifikat, daher Default = DEBUG.
+# In Produktion (DEBUG = False) muss ein gültiges Zertifikat verwendet werden.
+BACKEND_TLS_VERIFY = env.bool("BACKEND_TLS_VERIFY", default=not DEBUG)
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

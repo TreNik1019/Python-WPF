@@ -1,18 +1,240 @@
 """Views for the patient app: home page and patient search."""
 
 import logging
-import re
 import math
+import re
+from typing import Any
+
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
+
 from .services import patient_service
 
 logger = logging.getLogger(__name__)
+
+PAGE_SIZE = 10
+MIN_ID_DIGITS = 1
+MAX_ID_DIGITS = 4
+ADDRESS_PARTS_WITH_ORT = 2
+VALID_QUERY_PATTERN = r"^[a-zA-ZäöüÄÖÜß0-9\s\-]+$"
+BACKEND_ERRORS = (RuntimeError, ConnectionError, OSError, ValueError)
 
 
 def home_view(request: HttpRequest) -> HttpResponse:
     """Render the home/landing page."""
     return render(request, "patient/home.html")
+
+
+def _default_context() -> dict[str, Any]:
+    """Liefert die Default-Werte für das Such-Template."""
+    return {
+        "query": "",
+        "id_val": "",
+        "nachname_val": "",
+        "html_table": None,
+        "total_count": 0,
+        "current_page": 0,
+        "prev_page": -1,
+        "next_page": 1,
+        "has_next": False,
+        "filter_type": "Kein Filter",
+        "error_type": "",
+        "error_message": "",
+        "backend_error": False,
+    }
+
+
+def _parse_page(request: HttpRequest) -> int:
+    """Liest den Pagination-Parameter `page` robust aus der Query aus."""
+    try:
+        return max(0, int(request.GET.get("page", 0)))
+    except ValueError, TypeError:
+        return 0
+
+
+def _fetch_page(*, nachname: str, page: int) -> tuple[int, str, int, bool]:
+    """Holt eine Ergebnisseite vom Backend, optional nach Nachname gefiltert."""
+    total_elements = patient_service.get_count(nachname=nachname)
+    total_pages = math.ceil(total_elements / PAGE_SIZE) if total_elements > 0 else 1
+    if page >= total_pages:
+        page = max(0, total_pages - 1)
+
+    html_table = patient_service.get_all_html(
+        nachname=nachname, page=page, size=PAGE_SIZE
+    )
+    has_next = (page + 1) < total_pages
+    return total_elements, html_table, page, has_next
+
+
+def _extract_match(pattern: str, backend_html: str, default: str = "") -> str:
+    """Sucht `pattern` im Backend-HTML und liefert die erste Gruppe (oder `default`)."""
+    match = re.search(pattern, backend_html, re.IGNORECASE)
+    return match.group(1).strip() if match else default
+
+
+def _extract_address(backend_html: str) -> tuple[str, str]:
+    """Extrahiert PLZ und Ort aus dem Adressfeld des Backend-HTML."""
+    adresse = _extract_match(r"<strong>Adresse:</strong>\s*([^<]+)", backend_html)
+    if not adresse:
+        return "", ""
+
+    adresse_parts = adresse.split(" ", 1)
+    if len(adresse_parts) == ADDRESS_PARTS_WITH_ORT:
+        return adresse_parts[0], adresse_parts[1]
+    return adresse, ""
+
+
+def _build_id_result_table(backend_html: str, query: str) -> str:
+    """Parst das Backend-<article> per Regex und baut die gewohnte HTML-Tabelle."""
+    fields = {
+        "patient_id": _extract_match(r"<h2>Patient\s+(\d+)</h2>", backend_html, query),
+        "nachname": _extract_match(
+            r"<strong>Nachname:</strong>\s*([^<]+)", backend_html
+        ),
+        "email": _extract_match(r"<strong>E-Mail:</strong>\s*([^<]+)", backend_html),
+        "geburtsdatum": _extract_match(
+            r"<strong>Geburtsdatum:</strong>\s*([^<]+)", backend_html
+        ),
+        "geschlecht": _extract_match(
+            r"<strong>Geschlecht:</strong>\s*([^<]+)", backend_html
+        ),
+        "familienstand": _extract_match(
+            r"<strong>Familienstand:</strong>\s*([^<]+)", backend_html
+        ),
+    }
+    fields["plz"], fields["ort"] = _extract_address(backend_html)
+
+    return f"""
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th><th>Nachname</th><th>E-Mail</th><th>Geburtsdatum</th>
+                <th>Geschlecht</th><th>Familienstand</th><th>PLZ</th><th>Ort</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{fields["patient_id"]}</td>
+                <td>{fields["nachname"]}</td>
+                <td>{fields["email"]}</td>
+                <td>{fields["geburtsdatum"]}</td>
+                <td>{fields["geschlecht"]}</td>
+                <td>{fields["familienstand"]}</td>
+                <td>{fields["plz"]}</td><td>{fields["ort"]}</td>
+            </tr>
+        </tbody>
+    </table>
+    """
+
+
+def _render_validation_error(
+    request: HttpRequest, query: str, id_val: str, nachname_val: str, message: str
+) -> HttpResponse:
+    """Rendert das Such-Template mit einer Validierungsfehlermeldung."""
+    context = _default_context()
+    context.update(
+        query=query,
+        id_val=id_val,
+        nachname_val=nachname_val,
+        filter_type="Ungültig",
+        error_type="validation_error",
+        error_message=message,
+    )
+    return render(request, "patient/search.html", context)
+
+
+def _search_unfiltered(
+    request: HttpRequest, id_val: str, nachname_val: str
+) -> HttpResponse:
+    """Leere Gesamtsuche ohne Filter, aber mit Pagination."""
+    page = _parse_page(request)
+    html_table, total_elements, has_next, backend_error = "", 0, False, False
+    try:
+        total_elements, html_table, page, has_next = _fetch_page(nachname="", page=page)
+    except BACKEND_ERRORS as exc:
+        logger.error("Backend request failed: %s", exc)
+        backend_error = True
+
+    context = _default_context()
+    context.update(
+        id_val=id_val,
+        nachname_val=nachname_val,
+        html_table=html_table,
+        total_count=total_elements,
+        current_page=page,
+        prev_page=page - 1,
+        next_page=page + 1,
+        has_next=has_next,
+        backend_error=backend_error,
+    )
+    return render(request, "patient/search.html", context)
+
+
+def _search_by_id(
+    request: HttpRequest, query: str, id_val: str, nachname_val: str
+) -> HttpResponse:
+    """ID-Suche (reine Ziffern), ohne Pagination."""
+    if not (MIN_ID_DIGITS <= len(query) <= MAX_ID_DIGITS):
+        return _render_validation_error(
+            request,
+            query,
+            id_val,
+            nachname_val,
+            "Die ID muss zwischen 1 und 4 Ziffern lang sein.",
+        )
+
+    html_table, total_elements, backend_error = "", 0, False
+    try:
+        backend_html = patient_service.get_by_id_html(int(query))
+        if backend_html:
+            html_table = _build_id_result_table(backend_html, query)
+            total_elements = 1
+    except BACKEND_ERRORS as exc:
+        logger.error("Backend request failed: %s", exc)
+        backend_error = True
+
+    context = _default_context()
+    context.update(
+        query=query,
+        id_val=id_val,
+        nachname_val=nachname_val,
+        html_table=html_table,
+        total_count=total_elements,
+        filter_type="ID",
+        backend_error=backend_error,
+    )
+    return render(request, "patient/search.html", context)
+
+
+def _search_by_nachname(
+    request: HttpRequest, query: str, id_val: str, nachname_val: str
+) -> HttpResponse:
+    """Nachname-Suche (Buchstaben), mit Pagination."""
+    page = _parse_page(request)
+    html_table, total_elements, has_next, backend_error = "", 0, False, False
+    try:
+        total_elements, html_table, page, has_next = _fetch_page(
+            nachname=query, page=page
+        )
+    except BACKEND_ERRORS as exc:
+        logger.error("Backend request failed: %s", exc)
+        backend_error = True
+
+    context = _default_context()
+    context.update(
+        query=query,
+        id_val=id_val,
+        nachname_val=nachname_val,
+        html_table=html_table,
+        total_count=total_elements,
+        current_page=page,
+        prev_page=page - 1,
+        next_page=page + 1,
+        has_next=has_next,
+        filter_type="Nachname",
+        backend_error=backend_error,
+    )
+    return render(request, "patient/search.html", context)
 
 
 def search_view(request: HttpRequest) -> HttpResponse:
@@ -25,222 +247,22 @@ def search_view(request: HttpRequest) -> HttpResponse:
     query = id_val or nachname_val or query_val
 
     # Prüfen, ob überhaupt ein Such-Event stattgefunden hat (Parameter in request.GET)
-    if not any(k in request.GET for k in ["id", "nachname", "query"]):
-        return render(
-            request,
-            "patient/search.html",
-            {
-                "query": "",
-                "id_val": "",
-                "nachname_val": "",
-                "html_table": None,
-                "total_count": 0,
-                "current_page": 0,
-                "has_next": False,
-                "filter_type": "Kein Filter",
-            },
-        )
+    if not any(k in request.GET for k in ("id", "nachname", "query")):
+        return render(request, "patient/search.html", _default_context())
 
-    # Default-Variablen für das Template initialisieren
-    html_table = ""
-    total_elements = 0
-    current_page = 0
-    has_next = False
-    backend_error = False
-
-    # Keine Eingabe (Leere Gesamtsuche -> MIT SAUBERER PAGINATION)
     if not query:
-        filter_type = "Kein Filter"
-        try:
-            page = max(0, int(request.GET.get("page", 0)))
-        except ValueError, TypeError:
-            page = 0
+        return _search_unfiltered(request, id_val, nachname_val)
 
-        try:
-            size = 10
-            total_elements = patient_service.get_count()
-
-            total_pages = math.ceil(total_elements / size) if total_elements > 0 else 1
-            if page >= total_pages:
-                page = max(0, total_pages - 1)
-
-            # Holt exakt die HTML-Tabelle für die aktuelle 10er-Seite
-            html_table = patient_service.get_all_html(page=page, size=size)
-            has_next = (page + 1) < total_pages
-            current_page = page
-        except (RuntimeError, ConnectionError, OSError, ValueError) as exc:
-            logger.error("Backend request failed: %s", exc)
-            backend_error = True
-
-        return render(
+    if not re.match(VALID_QUERY_PATTERN, query):
+        return _render_validation_error(
             request,
-            "patient/search.html",
-            {
-                "query": query,
-                "id_val": id_val,
-                "nachname_val": nachname_val,
-                "html_table": html_table,
-                "total_count": total_elements,
-                "current_page": current_page,
-                "prev_page": current_page - 1,
-                "next_page": current_page + 1,
-                "has_next": has_next,
-                "filter_type": filter_type,
-                "backend_error": backend_error,
-            },
+            query,
+            id_val,
+            nachname_val,
+            "Ungültige Zeichen verwendet. Bitte nur Buchstaben oder Zahlen eingeben.",
         )
 
-    # VALIDIERUNG: Sonderzeichen abfangen
-    if not re.match(r"^[a-zA-ZäöüÄÖÜß0-9\s\-]+$", query):
-        return render(
-            request,
-            "patient/search.html",
-            {
-                "query": query,
-                "id_val": id_val,
-                "nachname_val": nachname_val,
-                "html_table": "",
-                "total_count": 0,
-                "has_next": False,
-                "filter_type": "Ungültig",
-                "error_type": "validation_error",
-                "error_message": "Ungültige Zeichen verwendet. Bitte nur Buchstaben oder Zahlen eingeben.",
-            },
-        )
-
-    # ID (Reine Ziffern -> OHNE PAGINATION)
     if query.isdigit():
-        filter_type = "ID"
-        if not (1 <= len(query) <= 4):
-            return render(
-                request,
-                "patient/search.html",
-                {
-                    "query": query,
-                    "id_val": id_val,
-                    "nachname_val": nachname_val,
-                    "html_table": "",
-                    "total_count": 0,
-                    "has_next": False,
-                    "filter_type": "Ungültig",
-                    "error_type": "validation_error",
-                    "error_message": "Die ID muss zwischen 1 und 4 Ziffern lang sein.",
-                },
-            )
+        return _search_by_id(request, query, id_val, nachname_val)
 
-        try:
-            backend_html = patient_service.get_by_id_html(int(query))
-            if backend_html:
-                # Da das Backend bei der ID-Suche standardmäßig einen <article> liefert,
-                # parsen wir die Werte per Regex, um sie in die gewohnte HTML-Tabelle einzubauen.
-                p_id = re.search(
-                    r"<h2>Patient\s+(\d+)</h2>", backend_html, re.IGNORECASE
-                )
-                p_nachname = re.search(
-                    r"<strong>Nachname:</strong>\s*([^<]+)", backend_html, re.IGNORECASE
-                )
-                p_email = re.search(
-                    r"<strong>E-Mail:</strong>\s*([^<]+)", backend_html, re.IGNORECASE
-                )
-                p_geburtsdatum = re.search(
-                    r"<strong>Geburtsdatum:</strong>\s*([^<]+)",
-                    backend_html,
-                    re.IGNORECASE,
-                )
-                p_geschlecht = re.search(
-                    r"<strong>Geschlecht:</strong>\s*([^<]+)",
-                    backend_html,
-                    re.IGNORECASE,
-                )
-                p_familienstand = re.search(
-                    r"<strong>Familienstand:</strong>\s*([^<]+)",
-                    backend_html,
-                    re.IGNORECASE,
-                )
-                p_adresse = re.search(
-                    r"<strong>Adresse:</strong>\s*([^<]+)", backend_html, re.IGNORECASE
-                )
-
-                plz, ort = "", ""
-                if p_adresse:
-                    adresse_parts = p_adresse.group(1).strip().split(" ", 1)
-                    plz, ort = (
-                        (adresse_parts[0], adresse_parts[1])
-                        if len(adresse_parts) == 2
-                        else (p_adresse.group(1).strip(), "")
-                    )
-
-                total_elements = 1
-                html_table = f"""
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th><th>Nachname</th><th>E-Mail</th><th>Geburtsdatum</th>
-                            <th>Geschlecht</th><th>Familienstand</th><th>PLZ</th><th>Ort</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>{p_id.group(1).strip() if p_id else query}</td>
-                            <td>{p_nachname.group(1).strip() if p_nachname else ""}</td>
-                            <td>{p_email.group(1).strip() if p_email else ""}</td>
-                            <td>{p_geburtsdatum.group(1).strip() if p_geburtsdatum else ""}</td>
-                            <td>{p_geschlecht.group(1).strip() if p_geschlecht else ""}</td>
-                            <td>{p_familienstand.group(1).strip() if p_familienstand else ""}</td>
-                            <td>{plz}</td><td>{ort}</td>
-                        </tr>
-                    </tbody>
-                </table>
-                """
-        except (RuntimeError, ConnectionError, OSError, ValueError) as exc:
-            logger.error("Backend request failed: %s", exc)
-            backend_error = True
-
-    # Nachname (Buchstaben -> OHNE PAGINATION)
-    else:
-        filter_type = "Nachname"
-        try:
-            page = max(0, int(request.GET.get("page", 0)))
-        except ValueError, TypeError:
-            page = 0
-
-        try:
-            size = 10
-
-            total_elements = patient_service.get_count(nachname=query)
-
-            total_pages = (
-                (total_elements + size - 1) // size if total_elements > 0 else 1
-            )
-            if page >= total_pages:
-                page = max(0, total_pages - 1)
-
-            html_table = patient_service.get_all_html(
-                nachname=query, page=page, size=size
-            )
-
-            has_next = (page + 1) < total_pages
-            current_page = page
-
-        except (RuntimeError, ConnectionError, OSError, ValueError) as exc:
-            logger.error("Backend request failed: %s", exc)
-            backend_error = True
-
-    return render(
-        request,
-        "patient/search.html",
-        {
-            "query": query,
-            "id_val": id_val,
-            "nachname_val": nachname_val,
-            "html_table": html_table,
-            "total_count": total_elements,
-            "current_page": current_page,
-            "prev_page": current_page - 1,
-            "next_page": current_page + 1,
-            "has_next": has_next,
-            "filter_type": filter_type,
-            "error_message": "",
-            "backend_error": backend_error,
-        },
-    )
+    return _search_by_nachname(request, query, id_val, nachname_val)

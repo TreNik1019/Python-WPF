@@ -28,9 +28,7 @@ class PatientMockRepository:
             self._create_patient(80, "Eta", "eta@acme.de", "patient80", "76143"),
             self._create_patient(90, "Theta", "theta@acme.de", "patient90", "76145"),
             self._create_patient(100, "Iota", "iota@acme.de", "patient100", "76147"),
-            self._create_patient(
-                110, "Kappa", "kappa@acme.de", "patient110", "76149"
-            ),
+            self._create_patient(110, "Kappa", "kappa@acme.de", "patient110", "76149"),
             self._create_patient(
                 120, "Lambda", "lambda@acme.de", "patient120", "76151"
             ),
@@ -114,13 +112,11 @@ class PatientMockRepository:
         teil_lower = teil.lower()
 
         return tuple(
-            sorted(
-                {
-                    patient.nachname
-                    for patient in self.patienten
-                    if teil_lower in patient.nachname.lower()
-                }
-            )
+            sorted({
+                patient.nachname
+                for patient in self.patienten
+                if teil_lower in patient.nachname.lower()
+            })
         )
 
     def _create_patient(

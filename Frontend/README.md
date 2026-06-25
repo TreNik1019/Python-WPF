@@ -87,9 +87,26 @@ Den laufenden Django-Server stoppt man im PowerShell-Fenster mit `STRG + C`.
 
 ## Codeanalyse und Formatierung mit ruff
 
+> Alle Befehle in diesem Abschnitt werden im `Frontend`-Ordner ausgeführt, damit
+> nicht versehentlich der Backend-Code mit der Frontend-Umgebung geprüft wird.
+
+Lint-Fehler anzeigen:
+
 ```shell
-    uvx ruff check [--fix] .
-    uvx ruff format . [--diff] [--check]
+    uvx ruff check .
+```
+
+Lint-Fehler anzeigen und automatisch beheben, soweit möglich:
+
+```shell
+    uvx ruff check --fix .
+```
+
+Formatierung prüfen bzw. anwenden:
+
+```shell
+    uvx ruff format . --check
+    uvx ruff format .
 ```
 
 ## Typprüfung mit ty

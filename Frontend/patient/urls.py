@@ -2,7 +2,7 @@
 
 from django.urls import path
 
-from patient.views import search_view, home_view
+from patient.views import home_view, search_view
 
 urlpatterns = [
     path("", home_view, name="home"),

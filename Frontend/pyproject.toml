@@ -10,8 +10,9 @@
 #               uv run python manage.py runserver 8001
 #               uv, uvx, ruff, ty aus $env:USERPROFILE\.local\bin
 #
-#           uvx ruff check [--fix] .
-#           uvx ruff format . [--diff] [--check]
+#           uvx ruff check .
+#           uvx ruff check --fix .
+#           uvx ruff format . --check
 #           uvx ty check .
 #
 #           uv tree --outdated --all-groups --depth=1
@@ -155,6 +156,9 @@ case-sensitive = true
 [tool.ruff.lint.per-file-ignores]
 # Migrationsdateien werden von Django generiert und nicht manuell formatiert
 "**/migrations/*.py" = ["D", "E501"]
+# manage.py ist Django-Standard-Boilerplate (django-admin startproject): der
+# Import muss im try-Block bleiben, damit die ImportError-Meldung greift
+"manage.py" = ["PLC0415"]
 
 # https://docs.astral.sh/ty/reference/configuration
 [tool.ty.environment]
