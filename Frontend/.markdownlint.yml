@@ -1,0 +1,10 @@
+---
+default: true
+# line-length
+MD013: false
+# no-inline-html
+MD033: false
+# no-bare-urls
+MD034: false
+# code-block-style
+MD046: false

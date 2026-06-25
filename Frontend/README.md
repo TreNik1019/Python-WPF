@@ -1,259 +1,164 @@
 # Django Frontend einrichten, aktuell halten und starten
 
-Dieses Projekt verwendet `uv` als Paketmanager für das Django-Frontend.
+Dieses Projekt verwendet `uv` als Paketmanager für das Django-Frontend. Das Frontend
+läuft lokal auf Port `8001`. Das Backend läuft separat und wird in dieser README nicht
+eingerichtet.
 
-Das Frontend läuft lokal auf Port `8001`.
+## Voraussetzung
 
-Das Backend läuft separat und wird in dieser README nicht eingerichtet.
+Benötigt wird _Windows_ mit _PowerShell_ sowie `uv` als Paketmanager.
 
----
+## Installation von uv als Projektmanager
 
-## 1. Voraussetzungen
-
-Benötigt wird:
-
-```text
-Windows
-PowerShell
-uv
+```shell
+    powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
----
+Danach PowerShell einmal schließen und neu öffnen und prüfen:
 
-## 2. uv installieren
-
-Falls `uv` noch nicht installiert ist, in PowerShell ausführen:
-
-```powershell
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```shell
+    uv --version
 ```
-
-Danach PowerShell einmal schließen und neu öffnen.
-
-Anschließend prüfen:
-
-```powershell
-uv --version
-```
-
-Wenn eine Versionsnummer angezeigt wird, ist `uv` installiert.
 
 Alternative Installation über WinGet:
 
-```powershell
-winget install --id=astral-sh.uv -e
+```shell
+    winget install --id=astral-sh.uv -e
 ```
 
----
+## In den Frontend-Ordner wechseln
 
-## 3. In den Frontend-Ordner wechseln
-
-```powershell
-cd C:\Zimmermann\Projekte\Python-WPF\Frontend
+```shell
+    cd <Pfad-zu-deinem-Repo>\Python-WPF\Frontend
 ```
 
 Alle weiteren Befehle werden im Frontend-Ordner ausgeführt.
 
----
+## Python-Version prüfen
 
-## 4. Python-Version prüfen
+Das Projekt verwendet die Python-Version aus der Datei `.python-version`. Prüfen,
+welche Python-Version im Frontend verwendet wird:
 
-Das Projekt verwendet die Python-Version aus der Datei:
-
-```text
-.python-version
-```
-
-Prüfen, welche Python-Version im Frontend verwendet wird:
-
-```powershell
-uv run python --version
+```shell
+    uv run python --version
 ```
 
 Falls Python für das Projekt noch nicht installiert ist:
 
-```powershell
-uv python install
+```shell
+    uv python install
 ```
 
-Danach erneut prüfen:
+## Tailwind CLI einrichten
 
-```powershell
-uv run python --version
-```
-
----
-
-## 5. Frontend-Abhängigkeiten installieren
-
-Beim ersten Einrichten des Projekts ausführen:
-
-```powershell
-uv sync
-```
-
-Dadurch erstellt `uv` die virtuelle Umgebung `.venv` und installiert alle Pakete aus:
-
-```text
-pyproject.toml
-uv.lock
-```
-
-### Erstmalige Einrichtung (Manueller Download):
+Das Projekt nutzt die offizielle, Node-freie _Tailwind Standalone CLI_ für das
+CSS-Build-System. Es wird dafür kein Node.js, npm oder `package.json` benötigt.
 
 1. Lade das offizielle Tailwind-Windows-CLI-Executable herunter:
    **[Download-Link (Tailwind v4.3.1 Windows x64)](https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-windows-x64.exe)**
 2. Benenne die heruntergeladene Datei in `tailwindcss.exe` um.
-3. Kopiere die `tailwindcss.exe` direkt in diesen `Frontend/`-Ordner.
+3. Kopiere die `tailwindcss.exe` direkt in diesen `Frontend`-Ordner.
 
----
+## Abhängigkeiten installieren
 
-## 6. Frontend starten (inkl. Tailwind CSS v4 Build)
-
-Das Projekt nutzt die offizielle, Node-freie **Tailwind Standalone CLI** für das CSS-Build-System. Du musst dafür kein Node.js, npm oder `package.json` installieren.
-
-### Frontend starten:
-
-Zum Starten des Frontends nutzen wir ein registriertes `uv`-Skript. Dieses prüft, ob die `tailwindcss.exe` da ist, gleicht leise die Version mit dem neuesten Release ab (und warnt bei Abweichungen), baut das CSS und startet den Django-Webserver auf Port `8001`:
-
-**Standard-Start (für den Kunden / Deployment):**
-
-Kompiliert das CSS einmalig frisch und startet den Django-Server (ohne Watch-Prozess im Hintergrund):
-```powershell
-uv run frontend
+```shell
+    uv sync --all-groups
 ```
 
-Danach ist das Frontend im Browser erreichbar unter:
+Dadurch erstellt `uv` die virtuelle Umgebung `.venv` und installiert alle Pakete aus
+`pyproject.toml` und `uv.lock`, einschließlich der `lint`-Dependency-Group.
 
-```text
-http://127.0.0.1:8001
+## Anwendung starten
+
+Zum Starten des Frontends gibt es ein registriertes `uv`-Skript. Es prüft, ob die
+`tailwindcss.exe` vorhanden ist, gleicht die lokale Version leise mit dem neuesten
+Release ab (Warnung bei Abweichungen), baut das CSS einmalig frisch und startet
+danach den Django-Webserver auf Port `8001`:
+
+```shell
+    uv run frontend
 ```
 
----
+Danach ist das Frontend im Browser erreichbar unter `http://127.0.0.1:8001`.
 
-## 7. Frontend stoppen
+## Anwendung stoppen
 
-Den laufenden Django-Server stoppt man im PowerShell-Fenster mit:
+Den laufenden Django-Server stoppt man im PowerShell-Fenster mit `STRG + C`.
 
-```text
-STRG + C
+## Codeanalyse und Formatierung mit ruff
+
+```shell
+    uvx ruff check [--fix] .
+    uvx ruff format . [--diff] [--check]
 ```
 
----
+## Typprüfung mit ty
 
-# Frontend aktuell halten
+```shell
+    uvx ty check .
+```
 
-## 8. uv aktualisieren
+## Sicherheitsanalyse mit pip-audit und PySentry
+
+```shell
+    uvx pip-audit
+    uvx pysentry-rs
+```
+
+## uv aktuell halten
 
 Wenn `uv` über den PowerShell-Installer installiert wurde:
 
-```powershell
-uv self update
+```shell
+    uv self update
 ```
 
-Danach prüfen:
+Wenn `uv` über WinGet installiert wurde:
 
-```powershell
-uv --version
+```shell
+    winget upgrade --id=astral-sh.uv -e
 ```
 
-Wenn `uv` über WinGet installiert wurde, dann über WinGet aktualisieren:
-
-```powershell
-winget upgrade --id=astral-sh.uv -e
-```
-
----
-
-## 9. Python-Version aktuell halten
-
-Prüfen, welche Python-Version verwendet wird:
-
-```powershell
-uv run python --version
-```
+## Python-Version aktuell halten
 
 Installierte uv-Python-Versionen auf den neuesten Patchstand bringen:
 
-```powershell
-uv python upgrade
+```shell
+    uv python upgrade
 ```
 
-Danach erneut prüfen:
+## Abhängigkeiten aktuell halten
 
-```powershell
-uv run python --version
+Prüfen, ob Pakete nicht mehr aktuell sind:
+
+```shell
+    uv pip list --outdated
 ```
-
----
-
-## 10. Prüfen, ob Pakete nicht mehr aktuell sind
-
-Im Frontend-Ordner ausführen:
-
-```powershell
-uv pip list --outdated
-```
-
-Wenn Pakete angezeigt werden, gibt es neuere Versionen.
-
-Wenn keine veralteten Pakete angezeigt werden, sind die installierten Pakete aktuell.
-
----
-
-## 11. Abhängigkeiten aktualisieren
 
 Alle Pakete innerhalb der erlaubten Versionsgrenzen aktualisieren:
 
-```powershell
-uv lock --upgrade
-uv sync
+```shell
+    uv lock --upgrade
+    uv sync
 ```
 
-Danach erneut prüfen:
+Einzelnes Paket aktualisieren, z. B. Django:
 
-```powershell
-uv pip list --outdated
+```shell
+    uv lock --upgrade-package django
+    uv sync
 ```
 
----
+## Neues Paket hinzufügen
 
-## 12. Einzelnes Paket aktualisieren
-
-Beispiel für Django:
-
-```powershell
-uv lock --upgrade-package django
-uv sync
+```shell
+    uv add requests
 ```
 
-Danach prüfen:
+Dadurch wird das Paket in die `pyproject.toml` eingetragen und die `uv.lock`
+aktualisiert.
 
-```powershell
-uv run python -m django --version
-```
-
----
-
-## 13. Neues Paket hinzufügen
-
-Beispiel:
-
-```powershell
-uv add requests
-```
-
-Dadurch wird das Paket in die `pyproject.toml` eingetragen und die `uv.lock` wird aktualisiert.
-
-Danach kann das Frontend wie gewohnt gestartet werden:
-
-```powershell
-uv run python manage.py runserver 8001
-```
-
----
-
-# Wichtige Dateien
+## Wichtige Dateien
 
 Diese Dateien gehören ins Git-Repository:
 
@@ -263,60 +168,9 @@ uv.lock
 .python-version
 ```
 
-Dieser Ordner gehört nicht ins Git-Repository:
+Dieser Ordner gehört **nicht** ins Git-Repository und ist bereits in der `.gitignore`
+ausgeschlossen:
 
 ```text
 .venv/
-```
-
-Falls `.venv/` noch nicht in der `.gitignore` steht, ergänzen:
-
-```text
-.venv/
-```
-
----
-
-# Kurzübersicht
-
-uv installieren:
-
-```powershell
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-```
-
-Frontend einrichten:
-1. Lade das offizielle Tailwind-Windows-CLI-Executable herunter:
-   **[Download-Link (Tailwind v4.3.1 Windows x64)](https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-windows-x64.exe)**
-2. Benenne die heruntergeladene Datei in `tailwindcss.exe` um.
-3. Kopiere die `tailwindcss.exe` direkt in diesen `Frontend/`-Ordner.
-
-```powershell
-cd C:\Zimmermann\Projekte\Python-WPF\Frontend
-uv sync
-```
-
-Frontend starten:
-
-```powershell
-uv run frontend
-```
-
-Frontend öffnen:
-
-```text
-http://127.0.0.1:8001
-```
-
-Prüfen, ob Pakete veraltet sind:
-
-```powershell
-uv pip list --outdated
-```
-
-Pakete aktualisieren:
-
-```powershell
-uv lock --upgrade
-uv sync
 ```

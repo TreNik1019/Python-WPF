@@ -1,10 +1,77 @@
+# https://peps.python.org/pep-0518
+# https://peps.python.org/pep-0621/#example
+# https://packaging.python.org/en/latest/specifications/pyproject-toml
+
+# TOML (= Tom's Obvious Minimal Language) https://toml.io
+
+# Aufruf:   uv sync --all-groups
+#
+#           uv run frontend
+#               uv run python manage.py runserver 8001
+#               uv, uvx, ruff, ty aus $env:USERPROFILE\.local\bin
+#
+#           uvx ruff check [--fix] .
+#           uvx ruff format . [--diff] [--check]
+#           uvx ty check .
+#
+#           uv tree --outdated --all-groups --depth=1
+#           uv tree --outdated --all-groups
+#           uv tree
+#
+#           uv python list
+#           uv pip list --outdated
+#
+#           uvx pysentry-rs
+#           uv pip compile pyproject.toml > requirements.txt
+#           uvx pip-audit -r requirements.txt
+#
+#           uv export -o pylock.toml        https://peps.python.org/pep-0751
+#           uv pip install                  mit pylock.toml
+#
+#           .\.venv\Scripts\activate.ps1
+#               pyright .
+
 [project]
 name = "frontend"
 version = "0.1.0"
-description = "Frontend mit Django"
+description = "Frontend mit Django, TailwindCSS und uv"
 readme = "README.md"
-requires-python = ">=3.14"
-dependencies = ["django>=6.0.6", "django-environ>=0.13.0", "requests>=2.34.2"]
+requires-python = ">=3.14.3"
+keywords = [
+    "Python",
+    "Django",
+    "WSGI",
+    "Frontend",
+    "TailwindCSS",
+    "SQLite",
+    "dotenv",
+    "Codeanalyse",
+    "Formatierung",
+    "Buildsystem",
+]
+# https://pypi.org/classifiers
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Framework :: Django",
+    "Framework :: Django :: 6.0",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+]
+
+dependencies = [
+    # https://www.djangoproject.com
+    "django>=6.0.6",
+    # https://github.com/joke2k/django-environ fuer .env-Dateien
+    "django-environ>=0.13.0",
+    # https://requests.readthedocs.io
+    # fuer den Zugriff des Frontends auf die REST-Schnittstelle des Backends
+    "requests>=2.34.2",
+]
 
 [project.scripts]
 frontend = "frontend:main"
@@ -16,5 +83,84 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 include = ["frontend.py"]
 
+# https://packaging.python.org/en/latest/specifications/dependency-groups
+# https://docs.astral.sh/uv/concepts/projects/dependencies/#dependency-groups
 [dependency-groups]
-dev = ["ruff>=0.15.6"]
+lint = [
+    # https://github.com/pypa/pip-audit
+    "pip-audit>=2.10.0",
+    # https://docs.pysentry.com
+    "pysentry-rs>=0.4.3",
+    # https://docs.astral.sh/ruff
+    "ruff>=0.15.6",
+    # https://github.com/astral-sh/ty
+    "ty>=0.0.23",
+]
+
+[tool.ruff]
+preview = true
+
+[tool.ruff.lint]
+# https://docs.astral.sh/ruff/rules
+select = [
+    "DJ",     # flake8-django https://docs.astral.sh/ruff/rules/#flake8-django-dj
+    "B",      # flake8-bugbear https://github.com/PyCQA/flake8-bugbear
+    "ASYNC",  # flake8-async https://github.com/python-trio/flake8-async
+    "S",      # flake8-bandit https://github.com/tylerwince/flake8-bandit Bandit>=1.7.1
+    "BLE",    # flake8-blind-except https://github.com/elijahandrews/flake8-blind-except
+    "FBT",    # flake8-boolean-trap https://github.com/pwoolvett/flake8_boolean_trap
+    "A",      # flake8-builtins https://github.com/gforcada/flake8-builtins
+    "COM",    # flake8-commas https://github.com/PyCQA/flake8-commas
+    "C4",     # flake8-comprehensions https://github.com/adamchainz/flake8-comprehensions
+    "ISC001", # flake8-implicit-str-concat https://github.com/flake8-implicit-str-concat/flake8-implicit-str-concat
+    "PIE",    # flake8-pie https://github.com/sbdchd/flake8-pie
+    "RSE",    # flake8-raise https://github.com/jdufresne/flake8-raise
+    "RET",    # flake8-return https://github.com/afonasev/flake8-return
+    "SLF",    # flake8-self
+    "SIM",    # flake8-simplify https://github.com/MartinThoma/flake8-simplify
+    "TID",    # flake8-tidy-imports https://github.com/adamchainz/flake8-tidy-imports
+    "TC",     # flake8-type-checking https://github.com/snok/flake8-type-checking
+    "ARG",    # flake8-unused-arguments https://github.com/nhoad/flake8-unused-arguments
+    "PTH",    # flake8-use-pathlib https://gitlab.com/RoPP/flake8-use-pathlib
+    "I",      # isort https://github.com/PyCQA/isort
+    "N",      # pep8-naming https://github.com/PyCQA/pep8-naming
+    "PERF",   # Perflint https://github.com/tonybaloney/perflint
+    "E",      # pycodestyle https://github.com/pycqa/pycodestyle
+    "W",      # pycodestyle (warning)
+    "D",      # pydoclint https://github.com/jsh9/pydoclint
+    "F",      # Pyflakes https://github.com/PyCQA/pyflakes
+    "PL",     # Pylint https://pypi.org/project/pylint
+    "UP",     # pyupgrade https://github.com/asottile/pyupgrade
+    "FURB",   # refurb https://github.com/dosisod/refurb
+    "RUF",    # Ruff-specific rules https://docs.astral.sh/ruff/rules/#ruff-specific-rules-ruf
+]
+ignore = [
+    # D212 https://docs.astral.sh/ruff/rules/multi-line-summary-first-line als Alternative zu D203 und D213
+    "D203",   # https://docs.astral.sh/ruff/rules/incorrect-blank-line-before-class
+    "D213",   # https://docs.astral.sh/ruff/rules/multi-line-summary-second-line
+    "RUF012", # https://docs.astral.sh/ruff/rules/mutable-class-default
+    # https://github.com/astral-sh/ruff/issues/9216
+    "COM812",  # https://docs.astral.sh/ruff/rules/missing-trailing-comma
+    "PLR6301", # https://docs.astral.sh/ruff/rules/no-self-use
+    "TC001",   # https://docs.astral.sh/ruff/rules/typing-only-first-party-import
+    "TC002",   # https://docs.astral.sh/ruff/rules/typing-only-third-party-import
+    "TC003",   # https://docs.astral.sh/ruff/rules/typing-only-standard-library-import
+    # manage.py-Migrationsdateien folgen ihrem eigenen Generator-Stil
+    "DJ001",   # https://docs.astral.sh/ruff/rules/django-null-false-on-char-field
+]
+
+[tool.ruff.lint.isort]
+case-sensitive = true
+
+[tool.ruff.lint.per-file-ignores]
+# Migrationsdateien werden von Django generiert und nicht manuell formatiert
+"**/migrations/*.py" = ["D", "E501"]
+
+# https://docs.astral.sh/ty/reference/configuration
+[tool.ty.environment]
+# https://docs.astral.sh/ty/reference/configuration/#python
+python = ".venv"
+
+# VORSICHT: in Dockerfile "--no-default-groups" bei "uv sync"
+[tool.uv]
+default-groups = "all"
