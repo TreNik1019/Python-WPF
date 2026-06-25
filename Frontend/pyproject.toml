@@ -37,6 +37,18 @@ name = "frontend"
 version = "0.1.0"
 description = "Frontend mit Django, TailwindCSS und uv"
 readme = "README.md"
+authors = [
+    { name = "Niklas Tremmel", email = "trni1019@h-ka.de" },
+    { name = "Marcus Akay", email = "akma1013@h-ka.de" },
+    { name = "Leon Jungkind", email = "jule1011@h-ka.de" },
+    { name = "Bastian Knebel", email = "knba1011@h-ka.de" },
+]
+maintainers = [
+    { name = "Niklas Tremmel", email = "trni1019@h-ka.de" },
+    { name = "Marcus Akay", email = "akma1013@h-ka.de" },
+    { name = "Leon Jungkind", email = "jule1011@h-ka.de" },
+    { name = "Bastian Knebel", email = "knba1011@h-ka.de" },
+]
 requires-python = ">=3.14.3"
 keywords = [
     "Python",
@@ -82,7 +94,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-include = ["frontend.py"]
+include = [
+    "frontend.py",
+    "manage.py",
+    "config/**/*.py",
+    "patient/**/*.py",
+    "templates/**/*",
+    "static/**/*",
+]
 
 # https://packaging.python.org/en/latest/specifications/dependency-groups
 # https://docs.astral.sh/uv/concepts/projects/dependencies/#dependency-groups
@@ -96,6 +115,17 @@ lint = [
     "ruff>=0.15.6",
     # https://github.com/astral-sh/ty
     "ty>=0.0.23",
+    # Typinformationen fuer requests
+    "types-requests>=2.32.4.20260602",
+]
+
+[tool.coverage.run]
+include = [
+    "config/*",
+    "patient/*",
+    "patient/services/*",
+    "frontend.py",
+    "manage.py",
 ]
 
 [tool.ruff]
@@ -164,6 +194,7 @@ case-sensitive = true
 [tool.ty.environment]
 # https://docs.astral.sh/ty/reference/configuration/#python
 python = ".venv"
+extra-paths = ["."]
 
 # VORSICHT: in Dockerfile "--no-default-groups" bei "uv sync"
 [tool.uv]
