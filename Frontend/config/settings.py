@@ -152,11 +152,16 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Logging
 # https://docs.djangoproject.com/en/6.0/topics/logging
 # https://docs.python.org/3/howto/logging.html
-# Analog zum Backend (config/logger.py): Rotating-Logfile in log/frontend.log,
-# Rotation bei 1 MB. Zusaetzlich Konsolen-Ausgabe fuer die lokale Entwicklung.
+# Analog zum Backend (config/logger.py): nur die eigenen App-Logger (Namespace
+# "patient") bekommen einen zusaetzlichen Rotating-File-Sink (log/frontend.log,
+# Rotation bei 1 MB) + Konsolen-Ausgabe. Djangos interne Logger (autoreload,
+# db.backends, request, server) bleiben unangetastet und behalten ihre
+# Standard-Konfiguration (django.utils.log.DEFAULT_LOGGING) - genauso wie beim
+# Backend, wo loguru nur explizite eigene logger.*()-Aufrufe in die Datei
+# schreibt und Uvicorn-/Framework-Rauschen unangetastet bleibt.
 LOG_DIR = BASE_DIR / "log"
 LOG_DIR.mkdir(exist_ok=True)
-LOG_LEVEL = env("DJANGO_LOG_LEVEL", default="DEBUG" if DEBUG else "INFO")
+LOG_LEVEL = env("DJANGO_LOG_LEVEL", default="INFO")
 
 LOGGING = {
     "version": 1,
@@ -181,12 +186,8 @@ LOGGING = {
             "encoding": "utf-8",
         },
     },
-    "root": {
-        "handlers": ["console", "file"],
-        "level": LOG_LEVEL,
-    },
     "loggers": {
-        "django": {
+        "patient": {
             "handlers": ["console", "file"],
             "level": LOG_LEVEL,
             "propagate": False,
