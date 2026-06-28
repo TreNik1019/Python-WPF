@@ -169,7 +169,7 @@ Einzelnes Paket aktualisieren, z. B. Django:
 ## Neues Paket hinzufügen
 
 ```shell
-    uv add requests
+    uv add httpx
 ```
 
 Dadurch wird das Paket in die `pyproject.toml` eingetragen und die `uv.lock`

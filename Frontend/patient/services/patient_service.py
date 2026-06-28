@@ -2,12 +2,20 @@
 
 from typing import Any
 
-import requests
+import httpx
 from django.conf import settings
 
 BACKEND_URL = getattr(settings, "BACKEND_URL", "https://127.0.0.1:8000/rest")
 TLS_VERIFY = getattr(settings, "BACKEND_TLS_VERIFY", True)
 HTTP_OK = 200
+
+
+def _get(url: str, **kwargs: Any) -> httpx.Response:
+    """Fuehrt einen GET-Request aus und normiert Client-Fehler."""
+    try:
+        return httpx.get(url, timeout=10, verify=TLS_VERIFY, **kwargs)
+    except httpx.HTTPError as exc:
+        raise ConnectionError("Backend request failed") from exc
 
 
 def get_all_html(nachname: str = "", page: int = 0, size: int = 10) -> str:
@@ -18,7 +26,7 @@ def get_all_html(nachname: str = "", page: int = 0, size: int = 10) -> str:
         else {"page": page, "size": size}
     )
 
-    response = requests.get(BACKEND_URL, params=params, timeout=10, verify=TLS_VERIFY)
+    response = _get(BACKEND_URL, params=params)
     if response.status_code == HTTP_OK:
         return response.text
     return ""
@@ -32,9 +40,7 @@ def get_count(nachname: str = "") -> int:
 
     headers = {"Accept": "application/json"}
 
-    response = requests.get(
-        BACKEND_URL, params=params, headers=headers, timeout=10, verify=TLS_VERIFY
-    )
+    response = _get(BACKEND_URL, params=params, headers=headers)
     if response.status_code == HTTP_OK:
         data = response.json()
         return int(data.get("page", {}).get("total_elements", 0))
@@ -44,7 +50,7 @@ def get_count(nachname: str = "") -> int:
 def get_by_id_html(patient_id: int) -> str:
     """Ruft den spezifischen ID-Endpoint auf und liefert das HTML."""
     url = f"{BACKEND_URL}/{patient_id}"
-    response = requests.get(url, timeout=10, verify=TLS_VERIFY)
+    response = _get(url)
 
     if response.status_code == HTTP_OK:
         return response.text

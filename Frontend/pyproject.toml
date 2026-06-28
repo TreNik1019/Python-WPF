@@ -81,9 +81,9 @@ dependencies = [
     "django>=6.0.6",
     # https://github.com/joke2k/django-environ fuer .env-Dateien
     "django-environ>=0.13.0",
-    # https://requests.readthedocs.io
+    # https://www.python-httpx.org
     # fuer den Zugriff des Frontends auf die REST-Schnittstelle des Backends
-    "requests>=2.34.2",
+    "httpx>=0.28.1",
 ]
 
 [project.scripts]
@@ -115,8 +115,6 @@ lint = [
     "ruff>=0.15.6",
     # https://github.com/astral-sh/ty
     "ty>=0.0.23",
-    # Typinformationen fuer requests
-    "types-requests>=2.32.4.20260602",
 ]
 
 [tool.coverage.run]
