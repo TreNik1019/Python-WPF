@@ -5,6 +5,7 @@ import os
 import re
 import subprocess  # noqa: S404
 import sys
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -18,6 +19,13 @@ LUCIDE_DOWNLOAD_URL_TEMPLATE = (
     "https://unpkg.com/lucide@{version}/dist/umd/lucide.min.js"
 )
 UPDATE_LUCIDE_ENV = "UPDATE_LUCIDE"
+
+
+def _assert_lucide_download_url(download_url: str) -> None:
+    """Erlaubt Lucide-Downloads nur per HTTPS von unpkg.com."""
+    parsed_url = urllib.parse.urlparse(download_url)
+    if parsed_url.scheme != "https" or parsed_url.netloc != "unpkg.com":
+        raise RuntimeError("Ungueltige Lucide-Download-URL.")
 
 
 def _check_tailwind_version(tailwind_exe: Path) -> None:
@@ -73,8 +81,9 @@ def _download_lucide(lucide_file: Path, version_file: Path, version: str) -> Non
     """Laedt die Lucide-UMD-Datei lokal in den static-Ordner."""
     lucide_file.parent.mkdir(parents=True, exist_ok=True)
     download_url = LUCIDE_DOWNLOAD_URL_TEMPLATE.format(version=version)
-    req = urllib.request.Request(download_url, method="GET")
+    _assert_lucide_download_url(download_url)
     # feste https-URL zu unpkg.com, Version kommt aus Lucide-package.json
+    req = urllib.request.Request(download_url, method="GET")  # noqa: S310
     with urllib.request.urlopen(req, timeout=10) as response:  # noqa: S310
         lucide_file.write_bytes(response.read())
     version_file.write_text(version, encoding="utf-8")
