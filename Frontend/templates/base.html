@@ -77,10 +77,8 @@
 
     {% block content %}{% endblock %}
 
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script>
-        lucide.createIcons();
-    </script>
+    <script src="{% static 'js/lucide.min.js' %}"></script>
+    <script src="{% static 'js/app.js' %}"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -59,6 +59,44 @@ CSS-Build-System. Es wird dafür kein Node.js, npm oder `package.json` benötigt
 2. Benenne die heruntergeladene Datei in `tailwindcss.exe` um.
 3. Kopiere die `tailwindcss.exe` direkt in diesen `Frontend`-Ordner.
 
+## Tailwind aktuell halten
+
+Beim Start mit `uv run frontend` wird die lokale Tailwind-Version mit dem neuesten
+GitHub-Release verglichen. Falls die Version veraltet ist, erscheint ein Hinweis
+mit dem Download-Link.
+
+Aktualisieren:
+
+1. Lade die aktuelle Windows-x64-Datei herunter:
+   **[Download-Link (Tailwind Windows x64)](https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-windows-x64.exe)**
+2. Benenne die Datei in `tailwindcss.exe` um.
+3. Ersetze die vorhandene Datei im `Frontend`-Ordner.
+4. Starte danach das Frontend erneut:
+
+```shell
+    uv run frontend
+```
+
+## Lucide aktuell halten
+
+Lucide wird lokal aus `static/js/lucide.min.js` geladen. Dadurch braucht die
+laufende Webseite kein externes CDN und die Content Security Policy kann
+restriktiver bleiben.
+
+Beim Start mit `uv run frontend` wird geprüft, ob eine neuere Lucide-Version
+verfügbar ist. Wenn die lokale Datei fehlt, wird sie automatisch heruntergeladen.
+Wenn nur eine neuere Version verfügbar ist, erscheint zuerst nur ein Hinweis.
+
+Automatisch aktualisieren:
+
+```shell
+    $env:UPDATE_LUCIDE='1'
+    uv run frontend
+```
+
+Danach wird `static/js/lucide.min.js` ersetzt und die installierte Version in
+`static/js/lucide.version` gespeichert.
+
 ## Abhängigkeiten installieren
 
 ```shell
