@@ -36,7 +36,7 @@ def get_count(nachname: str = "") -> int:
     """Holt die Anzahl der Treffer, entweder global oder gefiltert nach Nachname."""
     params: dict[str, Any] = {"page": 0, "size": 1}
     if nachname:
-        params["Nachname"] = nachname
+        params["nachname"] = nachname
 
     headers = {"Accept": "application/json"}
 

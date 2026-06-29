@@ -61,7 +61,15 @@
             </h2>
         </div>
 
-        {% if html_table %}
+        {% if backend_error %}
+            <div class="flex-1 flex flex-col items-center justify-center gap-3 rounded bg-[#161b22] border border-[#f85149]/30 py-10">
+                <i data-lucide="server-off" class="text-[#f85149]" style="width:36px; height:36px;"></i>
+                <h3 class="text-[#e6edf3] text-base font-semibold m-0">Verbindungsproblem</h3>
+                <p class="text-[#8b949e] text-sm text-center px-4">
+                    Das Backend ist zurzeit nicht erreichbar. Bitte stellen Sie sicher, dass der Backend-Server gestartet ist.
+                </p>
+            </div>
+        {% elif html_table %}
             <div class="flex-1 overflow-x-auto rounded border border-[#30363d] bg-[#161b22] w-full">
                 <div class="inline-block min-w-full align-middle p-0">
                     <div class="w-full

@@ -34,7 +34,7 @@
 
 [project]
 name = "frontend"
-version = "0.1.0"
+version = "1.2.3"
 description = "Frontend mit Django, TailwindCSS und uv"
 readme = "README.md"
 authors = [
@@ -175,7 +175,7 @@ ignore = [
     "TC002",   # https://docs.astral.sh/ruff/rules/typing-only-third-party-import
     "TC003",   # https://docs.astral.sh/ruff/rules/typing-only-standard-library-import
     # manage.py-Migrationsdateien folgen ihrem eigenen Generator-Stil
-    "DJ001",   # https://docs.astral.sh/ruff/rules/django-null-false-on-char-field
+    "DJ001", # https://docs.astral.sh/ruff/rules/django-null-false-on-char-field
 ]
 
 [tool.ruff.lint.isort]
