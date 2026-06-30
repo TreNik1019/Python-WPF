@@ -4,6 +4,7 @@ import math
 import re
 from typing import Any
 
+from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from loguru import logger
@@ -129,6 +130,7 @@ def _render_validation_error(
     request: HttpRequest, query: str, id_val: str, nachname_val: str, message: str
 ) -> HttpResponse:
     """Rendert das Such-Template mit einer Validierungsfehlermeldung."""
+    logger.warning("Validation failed for query '{}': {}", query, message)
     context = _default_context()
     context.update(
         query=query,
@@ -138,7 +140,7 @@ def _render_validation_error(
         error_type="validation_error",
         error_message=message,
     )
-    return render(request, "patient/search.html", context)
+    return render(request, "patient/search.html", context, status=400)
 
 
 def _search_unfiltered(
@@ -152,6 +154,10 @@ def _search_unfiltered(
     except BACKEND_ERRORS as exc:
         logger.error("Backend request failed: {}", exc)
         backend_error = True
+        settings.LOGGING_LOCAL.backend_error = True
+    else:
+        if total_elements == 0:
+            settings.LOGGING_LOCAL.empty_search = True
 
     context = _default_context()
     context.update(
@@ -184,12 +190,17 @@ def _search_by_id(
     html_table, total_elements, backend_error = "", 0, False
     try:
         backend_html = patient_service.get_by_id_html(int(query))
-        if backend_html:
-            html_table = _build_id_result_table(backend_html, query)
-            total_elements = 1
     except BACKEND_ERRORS as exc:
         logger.error("Backend request failed: {}", exc)
         backend_error = True
+        settings.LOGGING_LOCAL.backend_error = True
+    else:
+        if backend_html:
+            html_table = _build_id_result_table(backend_html, query)
+            total_elements = 1
+        else:
+            logger.info("Search by ID '{}' yielded no results.", query)
+            settings.LOGGING_LOCAL.empty_search = True
 
     context = _default_context()
     context.update(
@@ -214,9 +225,13 @@ def _search_by_nachname(
         total_elements, html_table, page, has_next = _fetch_page(
             nachname=query, page=page
         )
+        if total_elements == 0:
+            logger.info("Search by Nachname '{}' yielded no results.", query)
+            settings.LOGGING_LOCAL.empty_search = True
     except BACKEND_ERRORS as exc:
         logger.error("Backend request failed: {}", exc)
         backend_error = True
+        settings.LOGGING_LOCAL.backend_error = True
 
     context = _default_context()
     context.update(
