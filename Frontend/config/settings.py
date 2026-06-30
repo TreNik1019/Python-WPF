@@ -1,8 +1,11 @@
 """Django settings for the Frontend project."""
 
+import logging
+import sys
 from pathlib import Path
 
 import environ
+from loguru import logger
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -119,39 +122,65 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # "patient") bekommen einen zusaetzlichen Rotating-File-Sink (log/frontend.log,
 # Rotation bei 1 MB) + Konsolen-Ausgabe. Djangos interne Logger (autoreload,
 # db.backends, request, server) bleiben unangetastet und behalten ihre
-# Standard-Konfiguration (django.utils.log.DEFAULT_LOGGING) - genauso wie beim
-# Backend, wo loguru nur explizite eigene logger.*()-Aufrufe in die Datei
-# schreibt und Uvicorn-/Framework-Rauschen unangetastet bleibt.
+# Standard-Konfiguration (django.utils.log.DEFAULT_LOGGING).
 LOG_DIR = BASE_DIR / "log"
 LOG_DIR.mkdir(exist_ok=True)
 LOG_LEVEL = env("DJANGO_LOG_LEVEL", default="INFO")
 
+
+class InterceptHandler(logging.Handler):
+    """Handler, der Python standard-logging-Events an loguru weiterleitet."""
+
+    def emit(self, record: logging.LogRecord) -> None:
+        """Weiterleiten des Log-Eintrags an loguru."""
+        # Passenden Loguru-Level ermitteln
+        try:
+            level = logger.level(record.levelname).name
+        except ValueError:
+            level = record.levelno
+
+        # Herkunftsort des Log-Eintrags ermitteln
+        frame, depth = logging.currentframe(), 2
+        while frame and frame.f_code.co_filename == logging.__file__:
+            frame = frame.f_back
+            depth += 1
+
+        logger.opt(depth=depth, exception=record.exc_info).log(
+            level, record.getMessage()
+        )
+
+
+# Loguru fuer das Frontend konfigurieren
+logger.remove()
+logger.add(
+    LOG_DIR / "frontend.log",
+    rotation="1 MB",
+    level=LOG_LEVEL,
+    encoding="utf-8",
+)
+logger.add(sys.stderr, level=LOG_LEVEL)
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "formatters": {
-        "verbose": {
-            "format": "{asctime} {levelname} {name}: {message}",
-            "style": "{",
-        },
-    },
     "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-            "formatter": "verbose",
-        },
-        "file": {
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": LOG_DIR / "frontend.log",
-            "maxBytes": 1024 * 1024,
-            "backupCount": 5,
-            "formatter": "verbose",
-            "encoding": "utf-8",
+        "loguru": {
+            "class": "config.settings.InterceptHandler",
         },
     },
     "loggers": {
         "patient": {
-            "handlers": ["console", "file"],
+            "handlers": ["loguru"],
+            "level": LOG_LEVEL,
+            "propagate": False,
+        },
+        "django": {
+            "handlers": ["loguru"],
+            "level": LOG_LEVEL,
+            "propagate": False,
+        },
+        "django.server": {
+            "handlers": ["loguru"],
             "level": LOG_LEVEL,
             "propagate": False,
         },

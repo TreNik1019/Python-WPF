@@ -84,7 +84,10 @@ dependencies = [
     # https://www.python-httpx.org
     # fuer den Zugriff des Frontends auf die REST-Schnittstelle des Backends
     "httpx>=0.28.1",
+    # https://github.com/Delgan/loguru
+    "loguru>=0.7.3",
 ]
+
 
 [project.scripts]
 frontend = "frontend:main"

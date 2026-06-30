@@ -1,16 +1,14 @@
 """Views for the patient app: home page and patient search."""
 
-import logging
 import math
 import re
 from typing import Any
 
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
+from loguru import logger
 
 from .services import patient_service
-
-logger = logging.getLogger(__name__)
 
 PAGE_SIZE = 10
 MIN_ID_DIGITS = 1
@@ -152,7 +150,7 @@ def _search_unfiltered(
     try:
         total_elements, html_table, page, has_next = _fetch_page(nachname="", page=page)
     except BACKEND_ERRORS as exc:
-        logger.error("Backend request failed: %s", exc)
+        logger.error("Backend request failed: {}", exc)
         backend_error = True
 
     context = _default_context()
@@ -190,7 +188,7 @@ def _search_by_id(
             html_table = _build_id_result_table(backend_html, query)
             total_elements = 1
     except BACKEND_ERRORS as exc:
-        logger.error("Backend request failed: %s", exc)
+        logger.error("Backend request failed: {}", exc)
         backend_error = True
 
     context = _default_context()
@@ -217,7 +215,7 @@ def _search_by_nachname(
             nachname=query, page=page
         )
     except BACKEND_ERRORS as exc:
-        logger.error("Backend request failed: %s", exc)
+        logger.error("Backend request failed: {}", exc)
         backend_error = True
 
     context = _default_context()
